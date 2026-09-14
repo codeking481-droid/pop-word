@@ -81,13 +81,14 @@ export async function onRequestGet({ request, env }) {
   };
 
   try {
-    await patchTable(supabaseUrl, serviceKey, 'profiles', { email: authenticatedEmail }, values);
-    await patchTable(supabaseUrl, serviceKey, 'subscriptions', { email: authenticatedEmail }, values);
+    const profileUpdated = await patchTable(supabaseUrl, serviceKey, 'profiles', { email: authenticatedEmail }, values);
+    const subscriptionUpdated = await patchTable(supabaseUrl, serviceKey, 'subscriptions', { email: authenticatedEmail }, values);
     await patchTable(supabaseUrl, serviceKey, 'users', { email: authenticatedEmail }, {
       is_pro: true,
       pro_plan: values.pro_plan,
       pro_since: values.pro_since,
     });
+    if (!profileUpdated && !subscriptionUpdated) return json({ error: 'Pro account record not found' }, 404);
   } catch (error) {
     console.error(error);
     return json({ error: 'Pro activation failed' }, 500);
