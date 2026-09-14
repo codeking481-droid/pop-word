@@ -15,7 +15,7 @@ Copy `.env.example` to `.env.local` and add the Supabase anon key from the proje
 
 Google OAuth must be enabled in Supabase Auth and configured with the deployed site URL and local callback origins. Pro access must be granted by a server-side Paystack webhook or verified Edge Function; the browser never grants Pro access directly.
 
-The current Pro checkout link is `https://paystack.shop/pay/yl0xsmgy4e`. Configure the same value as `VITE_PAYSTACK_PAGE` in Cloudflare Pages. The status button only refreshes the subscription row; it does not activate Pro, so a verified payment webhook/Edge Function must update `pro_expiry`.
+Paystack uses the inline checkout popup loaded from `js.paystack.co`; configure `VITE_PAYSTACK_PUBLIC_KEY` in Cloudflare Pages. The callback only refreshes status; a verified payment webhook/Edge Function must update `pro_expiry`. Do not put a Paystack secret key in frontend variables.
 
 ## Production build
 
