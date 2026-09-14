@@ -74,23 +74,25 @@ export async function onRequestGet({ request, env }) {
   }
 
   const values = {
-    is_pro: true,
-    pro_plan: 'PopWord Pro Monthly',
-    pro_since: new Date().toISOString(),
     pro_expiry: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
     status: 'pro',
     download_count: 0,
     paystack_ref: reference,
     activated_at: new Date().toISOString(),
   };
+  const profileValues = {
+    is_pro: true,
+    pro_plan: 'PopWord Pro Monthly',
+    pro_since: values.activated_at,
+  };
 
   try {
-    const profileUpdated = await patchTable(supabaseUrl, serviceKey, 'profiles', { email: authenticatedEmail }, values);
+    const profileUpdated = await patchTable(supabaseUrl, serviceKey, 'profiles', { email: authenticatedEmail }, profileValues);
     const subscriptionUpdated = await patchTable(supabaseUrl, serviceKey, 'subscriptions', { email: authenticatedEmail }, values);
     await patchTable(supabaseUrl, serviceKey, 'users', { email: authenticatedEmail }, {
       is_pro: true,
-      pro_plan: values.pro_plan,
-      pro_since: values.pro_since,
+      pro_plan: profileValues.pro_plan,
+      pro_since: profileValues.pro_since,
     });
     if (!profileUpdated && !subscriptionUpdated) return json({ error: 'Pro account record not found' }, 404);
   } catch (error) {
