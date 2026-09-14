@@ -51,9 +51,7 @@ async function createSubscription(baseUrl, serviceKey, userId, email, values) {
     body: JSON.stringify({
       user_id: userId,
       email,
-      is_pro: true,
       pro_expiry: values.pro_expiry,
-      pro_plan: values.pro_plan,
       download_count: 0,
     }),
   });
@@ -108,14 +106,12 @@ export async function onRequestGet({ request, env }) {
   }
 
   const values = {
-    is_pro: true,
     pro_expiry: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-    pro_plan: 'PopWord Pro Monthly - TEST',
     download_count: 0,
   };
   const profileValues = {
     is_pro: true,
-    pro_plan: values.pro_plan,
+    pro_plan: 'PopWord Pro Monthly - TEST',
   };
 
   try {
@@ -127,7 +123,6 @@ export async function onRequestGet({ request, env }) {
     await patchTable(supabaseUrl, serviceKey, 'users', { email: authenticatedEmail }, {
       is_pro: true,
       pro_plan: profileValues.pro_plan,
-      pro_since: profileValues.pro_since,
     }, true);
     if (!subscriptionUpdated) await createSubscription(supabaseUrl, serviceKey, userId, authenticatedEmail, values);
     if (!profileUpdated && !subscriptionUpdated) console.info('Pro activation created a new subscription record');
