@@ -25,20 +25,18 @@ The production output is written to `dist/`.
 ## Paystack Pro activation
 
 The Upgrade link opens Paystack Checkout. Pro access is activated only by the
-Supabase Edge Function after Paystack confirms a successful transaction.
+Cloudflare Pages Function after Paystack confirms a successful transaction.
 
-Deploy the function and set its secrets:
+Set these Cloudflare Pages **Production** variables and secrets:
 
-```bash
-supabase functions deploy paystack-webhook
-supabase secrets set PAYSTACK_SECRET_KEY=your_paystack_secret_key
-supabase secrets set SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
-```
+- `PAYSTACK_SECRET_KEY` (Secret)
+- `SUPABASE_SERVICE_ROLE_KEY` (Secret)
+- `VITE_SUPABASE_URL` (Plaintext URL, already used by the frontend)
 
 Run `supabase/schema.sql` in the Supabase SQL editor, then configure this
 Paystack webhook URL:
 
-`https://<your-project-ref>.supabase.co/functions/v1/paystack-webhook`
+`https://pop-word.pages.dev/api/paystack-webhook`
 
 Never expose either secret in Vite or browser code.
 
