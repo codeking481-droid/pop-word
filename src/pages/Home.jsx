@@ -5,11 +5,17 @@ import toast, { Toaster } from 'react-hot-toast';
 import ControlPanel from '@/components/popgen/ControlPanel';
 import PreviewPanel from '@/components/popgen/PreviewPanel';
 import { recordVideo, downloadBlob } from '@/components/popgen/exporter';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import SignupGate from '@/components/SignupGate';
 
 export default function Home() {
   const rendererRef = useRef(null);
   const ownedUrlsRef = useRef(new Set());
   const [exporting, setExporting] = useState(null);
+  const [user, setUser] = useState(null);
+  const [authReady, setAuthReady] = useState(!isSupabaseConfigured);
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState('');
 
   const [options, setOptions] = useState({
     script: '',
@@ -62,6 +68,40 @@ export default function Home() {
   const [batchScripts, setBatchScripts] = useState('');
   const [batchProgress, setBatchProgress] = useState(null);
   const [multiExporting, setMultiExporting] = useState(false);
+
+  useEffect(() => {
+    if (!supabase) return undefined;
+    let active = true;
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (!active) return;
+      if (error) setAuthError(error.message);
+      setUser(session?.user || null);
+      setAuthReady(true);
+    });
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null);
+      setAuthReady(true);
+      setAuthLoading(false);
+    });
+    return () => {
+      active = false;
+      listener.subscription.unsubscribe();
+    };
+  }, []);
+
+  const signIn = async () => {
+    if (!supabase) return;
+    setAuthLoading(true);
+    setAuthError('');
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin },
+    });
+    if (error) {
+      setAuthLoading(false);
+      setAuthError(error.message);
+    }
+  };
 
 
   useEffect(() => () => {
@@ -239,7 +279,7 @@ export default function Home() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/50">Offline mode</div>
+            {isSupabaseConfigured && user ? <span className="max-w-[220px] truncate text-xs text-white/55">{user.email}</span> : <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/50">Offline mode</div>}
           </div>
         </div>
       </header>
@@ -289,6 +329,7 @@ export default function Home() {
           success: { iconTheme: { primary: '#00FF62', secondary: '#0A0A0A' } },
         }}
       />
+      {isSupabaseConfigured && authReady && !user && <SignupGate onLogin={signIn} loading={authLoading} error={authError} />}
     </div>
   );
 }
