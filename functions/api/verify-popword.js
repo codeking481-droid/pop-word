@@ -95,8 +95,8 @@ export async function onRequestGet({ request, env }) {
   };
 
   try {
-    const profileUpdated = await patchTable(supabaseUrl, serviceKey, 'profiles', { email: authenticatedEmail }, profileValues, true);
-    const subscriptionUpdated = await patchTable(supabaseUrl, serviceKey, 'subscriptions', { email: authenticatedEmail }, values);
+    const profileUpdated = await patchTable(supabaseUrl, serviceKey, 'profiles', { email: authenticatedEmail }, profileValues);
+    const subscriptionUpdated = await patchTable(supabaseUrl, serviceKey, 'subscriptions', { email: authenticatedEmail }, values, true);
     await patchTable(supabaseUrl, serviceKey, 'users', { email: authenticatedEmail }, {
       is_pro: true,
       pro_plan: profileValues.pro_plan,

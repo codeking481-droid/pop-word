@@ -19,17 +19,23 @@ export default function Home() {
   const [subscription, setSubscription] = useState(null);
   const [upgradeLoading, setUpgradeLoading] = useState(false);
 
-  const loadSubscription = async (userId) => {
-    const { data, error } = await supabase.from('subscriptions')
+  const loadSubscription = async (userId, email) => {
+    const [{ data, error }, { data: profile, error: profileError }] = await Promise.all([
+      supabase.from('subscriptions')
       .select('download_count, pro_expiry, status')
       .eq('user_id', userId)
-      .maybeSingle();
-    if (error) {
+      .maybeSingle(),
+      supabase.from('profiles')
+        .select('is_pro, pro_plan, pro_since')
+        .eq('email', email)
+        .maybeSingle(),
+    ]);
+    if (error && profileError) {
       setAuthError(`Account status unavailable: ${error.message}`);
       setSubscription({ download_count: 0 });
       return;
     }
-    setSubscription(data || { download_count: 0 });
+    setSubscription({ ...(data || {}), ...(profile || {}), download_count: data?.download_count || 0 });
   };
 
   const [options, setOptions] = useState({
@@ -92,17 +98,17 @@ export default function Home() {
       if (error) setAuthError(error.message);
       setUser(session?.user || null);
       setAuthReady(true);
-      if (session?.user) loadSubscription(session.user.id);
+      if (session?.user) loadSubscription(session.user.id, session.user.email);
     });
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user || null);
       setAuthReady(true);
       setAuthLoading(false);
-      if (session?.user) loadSubscription(session.user.id);
+      if (session?.user) loadSubscription(session.user.id, session.user.email);
       else setSubscription(null);
     });
     const refreshOnReturn = () => {
-      if (document.visibilityState === 'visible' && user) loadSubscription(user.id);
+      if (document.visibilityState === 'visible' && user) loadSubscription(user.id, user.email);
     };
     document.addEventListener('visibilitychange', refreshOnReturn);
     return () => {
@@ -119,7 +125,10 @@ export default function Home() {
   };
 
   const trialRemaining = Math.max(0, 3 - (subscription?.download_count || 0));
-  const isPro = Boolean(subscription?.pro_expiry && new Date(subscription.pro_expiry).getTime() > Date.now());
+  const isPro = Boolean(
+    subscription?.is_pro ||
+    (subscription?.pro_expiry && new Date(subscription.pro_expiry).getTime() > Date.now()),
+  );
   const handleUpgrade = async () => {
     if (!user?.email || upgradeLoading) return;
     setUpgradeLoading(true);
