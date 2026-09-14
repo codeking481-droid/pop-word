@@ -20,7 +20,7 @@ export default function Home() {
 
   const loadSubscription = async (userId) => {
     const { data, error } = await supabase.from('subscriptions')
-      .select('download_count, pro_expiry')
+      .select('download_count, pro_expiry, status')
       .eq('user_id', userId)
       .maybeSingle();
     if (error) {
@@ -100,11 +100,16 @@ export default function Home() {
       if (session?.user) loadSubscription(session.user.id);
       else setSubscription(null);
     });
+    const refreshOnReturn = () => {
+      if (document.visibilityState === 'visible' && user) loadSubscription(user.id);
+    };
+    document.addEventListener('visibilitychange', refreshOnReturn);
     return () => {
       active = false;
       listener.subscription.unsubscribe();
+      document.removeEventListener('visibilitychange', refreshOnReturn);
     };
-  }, []);
+  }, [user]);
 
   const handleSignOut = async () => {
     if (!supabase) return;
