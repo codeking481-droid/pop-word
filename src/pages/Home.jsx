@@ -141,9 +141,37 @@ export default function Home() {
     window.addEventListener('keydown', closeOnEscape);
     return () => window.removeEventListener('keydown', closeOnEscape);
   }, [paywallOpen]);
-  const handlePay = () => {
-    if (!user || !window.PaystackPop) {
-      toast.error('Secure checkout is still loading. Please try again.');
+  const handlePay = async () => {
+    if (!user) return;
+    const publicKey = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY;
+    if (!publicKey) {
+      toast.error('Paystack is not configured in Cloudflare yet.');
+      return;
+    }
+    if (!window.PaystackPop) {
+      try {
+        await new Promise((resolve, reject) => {
+          const existing = document.querySelector('script[data-paystack-inline]');
+          if (existing) {
+            existing.addEventListener('load', resolve, { once: true });
+            existing.addEventListener('error', reject, { once: true });
+            return;
+          }
+          const script = document.createElement('script');
+          script.src = 'https://js.paystack.co/v1/inline.js';
+          script.async = true;
+          script.dataset.paystackInline = 'true';
+          script.onload = resolve;
+          script.onerror = reject;
+          document.head.appendChild(script);
+        });
+      } catch {
+        toast.error('Could not load Paystack checkout. Check your connection and try again.');
+        return;
+      }
+    }
+    if (!window.PaystackPop) {
+      toast.error('Paystack checkout is unavailable in this browser.');
       return;
     }
     setPaying(true);
