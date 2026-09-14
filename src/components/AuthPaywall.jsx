@@ -52,6 +52,7 @@ export default function PaywallModal({ user, downloadCount, isPro, onClose, onRe
           type="button"
           aria-label="Close paywall"
           onClick={onClose}
+          onPointerUp={onClose}
           className="absolute right-2 top-2 z-20 flex h-11 w-11 cursor-pointer items-center justify-center rounded-full bg-white/5 text-white/70 transition hover:bg-white/15 hover:text-white active:bg-white/20"
         >
           <X className="h-5 w-5" />
@@ -69,6 +70,9 @@ export default function PaywallModal({ user, downloadCount, isPro, onClose, onRe
           <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} /> {refreshing ? 'Checking payment status…' : 'I have paid — check my status'}
         </button>
         <p className="mt-3 text-[11px] leading-relaxed text-white/35">Secure Paystack checkout opens here. Pro activates after verified payment status is received.</p>
+        <button type="button" onClick={onClose} className="mt-4 w-full cursor-pointer text-center text-xs font-semibold text-white/45 underline decoration-white/20 underline-offset-4 transition hover:text-white">
+          Back to editor
+        </button>
       </div>
     </div>
   );

@@ -175,21 +175,26 @@ export default function Home() {
       return;
     }
     setPaying(true);
-    const handler = window.PaystackPop.setup({
-      key: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY,
-      email: user.email,
-      amount: 300000,
-      currency: 'NGN',
-      ref: `popword_${user.id}_${Date.now()}`,
-      metadata: { user_id: user.id },
-      callback: async () => {
-        setPaying(false);
-        await refreshSubscription();
-        toast.success('Payment received. Pro will activate after verification.');
-      },
-      onClose: () => setPaying(false),
-    });
-    handler.openIframe();
+    try {
+      const handler = window.PaystackPop.setup({
+        key: publicKey,
+        email: user.email,
+        amount: 300000,
+        currency: 'NGN',
+        ref: `popword_${user.id}_${Date.now()}`,
+        metadata: { user_id: user.id },
+        callback: async () => {
+          setPaying(false);
+          await refreshSubscription();
+          toast.success('Payment received. Pro will activate after verification.');
+        },
+        onClose: () => setPaying(false),
+      });
+      handler.openIframe();
+    } catch (error) {
+      setPaying(false);
+      toast.error(error?.message || 'Paystack could not open checkout.');
+    }
   };
   const ensureDownloadAccess = async () => {
     if (!isSupabaseConfigured) return true;
