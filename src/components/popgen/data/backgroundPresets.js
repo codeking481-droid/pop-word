@@ -1,0 +1,48 @@
+// Offline background presets: solids, gradients (20), images (20).
+export const SOLIDS = ['#000000', '#0A0A0A', '#101820', '#1A1A2E', '#16213E', '#0F3460', '#533483', '#9D0208', '#370617', '#003B36'];
+
+export const GRADIENTS = [
+  ['#1a0b3e', '#0a0118'],
+  ['#0F2027', '#2C5364'],
+  ['#42275A', '#734B98'],
+  ['#11998E', '#38EF7D'],
+  ['#FC466B', '#3F5EFB'],
+  ['#FFA800', '#FF2E63'],
+  ['#00C9FF', '#92FE9D'],
+  ['#FA709A', '#FEE140'],
+  ['#30CFD0', '#330867'],
+  ['#FCE38A', '#F38181'],
+  ['#0BA360', '#3CBA92'],
+  ['#FF512F', '#DD2476'],
+  ['#1A2980', '#26D0CE'],
+  ['#614385', '#516395'],
+  ['#FF6A00', '#EE0979'],
+  ['#3F5EFB', '#FC466B'],
+  ['#136A8A', '#267871'],
+  ['#7F00FF', '#E100FF'],
+  ['#000046', '#1CB5E0'],
+  ['#1F1C2C', '#928DAB'],
+];
+
+export const IMAGES = [
+  'https://picsum.photos/seed/pop1/1080/1920',
+  'https://picsum.photos/seed/pop2/1080/1920',
+  'https://picsum.photos/seed/pop3/1080/1920',
+  'https://picsum.photos/seed/pop4/1080/1920',
+  'https://picsum.photos/seed/pop5/1080/1920',
+  'https://picsum.photos/seed/pop6/1080/1920',
+  'https://picsum.photos/seed/pop7/1080/1920',
+  'https://picsum.photos/seed/pop8/1080/1920',
+  'https://picsum.photos/seed/pop9/1080/1920',
+  'https://picsum.photos/seed/pop10/1080/1920',
+  'https://picsum.photos/seed/pop11/1080/1920',
+  'https://picsum.photos/seed/pop12/1080/1920',
+  'https://picsum.photos/seed/pop13/1080/1920',
+  'https://picsum.photos/seed/pop14/1080/1920',
+  'https://picsum.photos/seed/pop15/1080/1920',
+  'https://picsum.photos/seed/pop16/1080/1920',
+  'https://picsum.photos/seed/pop17/1080/1920',
+  'https://picsum.photos/seed/pop18/1080/1920',
+  'https://picsum.photos/seed/pop19/1080/1920',
+  'https://picsum.photos/seed/pop20/1080/1920',
+];
