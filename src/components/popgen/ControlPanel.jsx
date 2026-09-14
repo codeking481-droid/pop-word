@@ -1,6 +1,5 @@
 import React, { useRef, useState } from 'react';
 import { Sparkles, Upload, Wand2, Film, X, Image as ImageIcon, Plus } from 'lucide-react';
-import AIScriptTools from './AIScriptTools';
 import PresetTemplates from './PresetTemplates';
 import BatchPanel from './BatchPanel';
 import BackgroundSection from './BackgroundSection';
@@ -42,7 +41,7 @@ function MediaThumb({ item }) {
   return <img src={item.url} alt="" className="h-full w-full object-cover" />;
 }
 
-export default function ControlPanel({ options, setOptions, onGenerate, exporting, onAddMedia, onSelectMedia, onRemoveMedia, onAITransform, aiBusy, onApplyPreset, batchScripts, setBatchScripts, onGenerateBatch, batchProgress, onGenerateThumbnail, onGenerateTitles, onMultiExport, multiExporting }) {
+export default function ControlPanel({ options, setOptions, onGenerate, exporting, onAddMedia, onSelectMedia, onRemoveMedia, onApplyPreset, batchScripts, setBatchScripts, onGenerateBatch, batchProgress, onMultiExport, multiExporting }) {
   const fileRef = useRef(null);
   const [dragging, setDragging] = useState(false);
   const [tab, setTab] = useState(options.mode === 'caption' ? 'caption' : 'pop');
@@ -103,10 +102,6 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
         />
         <div className="mt-1.5 text-right text-xs text-white/40">
           {options.script.trim() ? options.script.trim().split(/\s+/).filter(Boolean).length : 0} words
-        </div>
-        <div className="mt-2.5">
-          <Label icon={<Wand2 className="h-4 w-4" />}>AI Script Tools</Label>
-          <AIScriptTools onTransform={onAITransform} busy={aiBusy} />
         </div>
       </section>
 
@@ -339,13 +334,9 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
 
       <BrandKit options={options} update={update} />
 
-      {/* Wealth tools */}
+      {/* Export tools */}
       <section>
-        <Label>Wealth Tools</Label>
-        <div className="grid grid-cols-2 gap-2">
-          <button onClick={onGenerateThumbnail} className="rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-xs font-bold text-white/80 transition hover:border-[#00FF62]/50 hover:text-white">🖼️ Thumbnail</button>
-          <button onClick={onGenerateTitles} className="rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-xs font-bold text-white/80 transition hover:border-[#00FF62]/50 hover:text-white">#️⃣ Titles + Tags</button>
-        </div>
+        <Label>Export tools</Label>
         <button onClick={onMultiExport} disabled={busy || multiExporting} className="mt-2 w-full rounded-xl border border-[#00FF62]/40 bg-[#00FF62]/10 px-3 py-2.5 text-xs font-bold text-[#00FF62] transition hover:bg-[#00FF62]/20 disabled:opacity-50">
           {multiExporting ? 'Exporting all platforms…' : '⬇ Export for All Platforms'}
         </button>

@@ -5,10 +5,6 @@ import toast, { Toaster } from 'react-hot-toast';
 import ControlPanel from '@/components/popgen/ControlPanel';
 import PreviewPanel from '@/components/popgen/PreviewPanel';
 import { recordVideo, downloadBlob } from '@/components/popgen/exporter';
-import { generateTitlesAndHashtags } from '@/components/popgen/data/titleHashtag';
-import ViralScore from '@/components/popgen/ViralScore';
-import TitleHashtags from '@/components/popgen/TitleHashtags';
-import PopRenderer from '@/components/popgen/PopRenderer';
 
 export default function Home() {
   const rendererRef = useRef(null);
@@ -47,15 +43,9 @@ export default function Home() {
     brandLogo: null,
   });
 
-  const [aiBusy, setAiBusy] = useState(null);
-  const [showViralScore, setShowViralScore] = useState(false);
-  const [viralScore, setViralScore] = useState(0);
-  const [viralTips, setViralTips] = useState([]);
   const [batchScripts, setBatchScripts] = useState('');
   const [batchProgress, setBatchProgress] = useState(null);
   const [multiExporting, setMultiExporting] = useState(false);
-  const [showTitles, setShowTitles] = useState(false);
-  const [titleData, setTitleData] = useState({ titles: [], hashtags: [] });
 
   const ensureScript = () => {
     const r = rendererRef.current;
@@ -115,51 +105,6 @@ export default function Home() {
 
   const applyPreset = (patch) => setOptions((o) => ({ ...o, ...patch }));
 
-  const aiTransform = async (type) => {
-    if (!options.script.trim()) {
-      toast.error('Paste a script first');
-      return;
-    }
-    setAiBusy(type);
-    const prompts = {
-      viral: 'Rewrite this as a punchy, high-retention viral short-form video script with a strong hook and a call to action. Keep it concise. Return ONLY the script text, no quotes, no labels.',
-      emojis: 'Add relevant emojis naturally throughout this script to boost engagement. Return ONLY the script text.',
-      shorten: 'Tighten and shorten this script for maximum punchiness. Return ONLY the script text.',
-      expand: 'Expand this script with more vivid detail and storytelling while staying engaging. Return ONLY the script text.',
-    };
-    const text = options.script.trim();
-    const result = type === 'shorten'
-      ? text.split(/\s+/).slice(0, Math.max(1, Math.ceil(text.split(/\s+/).length * 0.65))).join(' ')
-      : type === 'emojis'
-        ? text.replace(/\b(amazing|great|success|money|win|love)\b/gi, '$& ✨')
-        : type === 'expand'
-          ? `${text} This is the moment to take action and make it count.`
-          : `You need to know this: ${text}`;
-    setOptions((o) => ({ ...o, script: result }));
-    setAiBusy(null);
-    toast.success(`${prompts[type].split(' ')[0]} transform applied offline`);
-  };
-
-  const computeViralScore = () => {
-    let score = 40;
-    const tips = [];
-    const words = (options.script.trim().match(/\S+/g)) || [];
-    const dur = words.length * (options.wordDuration || 0.4);
-    if (dur > 0 && dur <= 30) score += 15;
-    else if (dur > 0 && dur <= 60) score += 8;
-    else tips.push('Keep your video under 30s for max retention.');
-    const hookWords = ['you', 'now', 'secret', 'free', 'money', 'how', 'why', 'never', 'always', 'stop', 'this'];
-    if (words.some((w) => hookWords.includes(w.toLowerCase().replace(/[^a-z0-9]/g, '')))) score += 15;
-    else tips.push('Open with a hook word (you, now, secret, free, how, why).');
-    if (options.emojiPop) score += 10; else tips.push('Turn on Emoji Pop for extra engagement.');
-    if (options.autoHighlight) score += 8; else tips.push('Enable Auto-highlight to make key words pop.');
-    if (options.autoZoom) score += 7; else tips.push('Enable Auto-zoom for a pro camera feel.');
-    if (options.showProgressbar) score += 5;
-    if (['custom', 'image', 'gradient'].includes(options.background)) score += 5;
-    tips.push('Payments are coming soon; exported videos include the watermark for now.');
-    return { score: Math.min(100, score), tips: tips.slice(0, 4) };
-  };
-
   const handleGenerate = async () => {
     const ctx = ensureScript();
     if (!ctx) return;
@@ -171,8 +116,6 @@ export default function Home() {
       });
       downloadBlob(blob, 'popup-video.' + (blob.type.includes('mp4') ? 'mp4' : 'webm'));
       toast.success('Video ready!');
-      const vs = computeViralScore();
-      setViralScore(vs.score); setViralTips(vs.tips); setShowViralScore(true);
     } catch (e) {
       toast.error('Recording failed');
     }
@@ -204,32 +147,6 @@ export default function Home() {
     }
     setBatchProgress(null);
     toast.success(`Done — ${scripts.length} videos rendered`);
-  };
-
-  const generateThumbnail = async () => {
-    const r = rendererRef.current;
-    if (!r || !r.getWords().length) { toast.error('Paste a script first'); return; }
-    const off = document.createElement('canvas');
-    const thumb = new PopRenderer(off, { ...options, aspect: '16:9', showProgressbar: false, watermark: false });
-    thumb.setCustomMedia(options.customMedia || null);
-    thumb.renderFrameAt(0);
-    await new Promise((res) => setTimeout(res, 150));
-    thumb.renderFrameAt(0);
-    try {
-      off.toBlob((blob) => {
-        if (blob) downloadBlob(blob, 'popword-thumbnail.png');
-        else toast.error('Thumbnail failed — try a non-image background');
-      }, 'image/png');
-      toast.success('Thumbnail downloaded');
-    } catch (e) {
-      toast.error('Thumbnail failed — try a non-image background');
-    }
-  };
-
-  const generateTitles = () => {
-    if (!options.script.trim()) { toast.error('Paste a script first'); return; }
-    setTitleData(generateTitlesAndHashtags(options.script));
-    setShowTitles(true);
   };
 
   const handleMultiExport = async () => {
@@ -300,15 +217,11 @@ export default function Home() {
               onAddMedia={addMedia}
               onSelectMedia={selectMedia}
               onRemoveMedia={removeMedia}
-              onAITransform={aiTransform}
-              aiBusy={aiBusy}
               onApplyPreset={applyPreset}
               batchScripts={batchScripts}
               setBatchScripts={setBatchScripts}
               onGenerateBatch={generateBatch}
               batchProgress={batchProgress}
-              onGenerateThumbnail={generateThumbnail}
-              onGenerateTitles={generateTitles}
               onMultiExport={handleMultiExport}
               multiExporting={multiExporting}
             />
@@ -325,12 +238,6 @@ export default function Home() {
         </div>
       </main>
 
-      {showTitles && (
-        <TitleHashtags titles={titleData.titles} hashtags={titleData.hashtags} onClose={() => setShowTitles(false)} />
-      )}
-      {showViralScore && (
-        <ViralScore score={viralScore} tips={viralTips} onClose={() => setShowViralScore(false)} />
-      )}
       <Toaster
         position="bottom-center"
         toastOptions={{
