@@ -5,7 +5,8 @@ import { supabase } from '@/lib/supabase';
 
 export default function PaymentSuccess() {
   const [state, setState] = useState({ status: 'loading', message: '' });
-  const reference = new URLSearchParams(window.location.search).get('reference');
+  const paymentParams = new URLSearchParams(window.location.search);
+  const reference = paymentParams.get('reference') || paymentParams.get('trxref');
 
   const verifyPayment = async () => {
     if (!reference || !supabase) {
