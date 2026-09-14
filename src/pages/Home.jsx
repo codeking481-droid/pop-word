@@ -22,7 +22,7 @@ export default function Home() {
   const loadSubscription = async (userId, email) => {
     const [{ data, error }, { data: profile, error: profileError }] = await Promise.all([
       supabase.from('subscriptions')
-      .select('download_count, pro_expiry, status')
+      .select('download_count, pro_expiry')
       .eq('user_id', userId)
       .maybeSingle(),
       supabase.from('profiles')
