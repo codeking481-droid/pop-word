@@ -16,6 +16,7 @@ export default function Home() {
   const [authReady, setAuthReady] = useState(!isSupabaseConfigured);
   const [subscription, setSubscription] = useState(null);
   const [paywallOpen, setPaywallOpen] = useState(false);
+  const [refreshingSubscription, setRefreshingSubscription] = useState(false);
 
   const [options, setOptions] = useState({
     script: '',
@@ -123,6 +124,14 @@ export default function Home() {
   };
 
   const isPro = Boolean(subscription?.pro_expiry && new Date(subscription.pro_expiry).getTime() > Date.now());
+  const refreshSubscription = async () => {
+    setRefreshingSubscription(true);
+    try {
+      await loadSubscription(user);
+    } finally {
+      setRefreshingSubscription(false);
+    }
+  };
   const ensureDownloadAccess = async () => {
     if (!isSupabaseConfigured) return true;
     if (!user) {
@@ -385,7 +394,8 @@ export default function Home() {
         downloadCount={subscription?.download_count || 0}
         isPro={isPro}
         onClose={() => setPaywallOpen(false)}
-        onRefresh={() => { setPaywallOpen(false); loadSubscription(user); }}
+        refreshing={refreshingSubscription}
+        onRefresh={refreshSubscription}
       />
       {isSupabaseConfigured && authReady && !user && <SignupGate onLogin={signIn} />}
     </div>
