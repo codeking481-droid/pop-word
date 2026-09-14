@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Zap } from 'lucide-react';
+import { LogOut, Zap } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 
 import ControlPanel from '@/components/popgen/ControlPanel';
@@ -16,6 +16,7 @@ export default function Home() {
   const [authReady, setAuthReady] = useState(!isSupabaseConfigured);
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState('');
+  const [subscription, setSubscription] = useState(null);
 
   const [options, setOptions] = useState({
     script: '',
@@ -77,17 +78,36 @@ export default function Home() {
       if (error) setAuthError(error.message);
       setUser(session?.user || null);
       setAuthReady(true);
+      if (session?.user) {
+        supabase.from('subscriptions').select('download_count, pro_expiry').eq('user_id', session.user.id).maybeSingle()
+          .then(({ data }) => setSubscription(data || { download_count: 0 }));
+      }
     });
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user || null);
       setAuthReady(true);
       setAuthLoading(false);
+      if (session?.user) {
+        supabase.from('subscriptions').select('download_count, pro_expiry').eq('user_id', session.user.id).maybeSingle()
+          .then(({ data }) => setSubscription(data || { download_count: 0 }));
+      } else {
+        setSubscription(null);
+      }
     });
     return () => {
       active = false;
       listener.subscription.unsubscribe();
     };
   }, []);
+
+  const handleSignOut = async () => {
+    if (!supabase) return;
+    const { error } = await supabase.auth.signOut();
+    if (error) setAuthError(error.message);
+  };
+
+  const trialRemaining = Math.max(0, 3 - (subscription?.download_count || 0));
+  const isPro = Boolean(subscription?.pro_expiry && new Date(subscription.pro_expiry).getTime() > Date.now());
 
   const signIn = async () => {
     if (!supabase) return;
@@ -279,7 +299,18 @@ export default function Home() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            {isSupabaseConfigured && user ? <span className="max-w-[220px] truncate text-xs text-white/55">{user.email}</span> : <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/50">Offline mode</div>}
+            {isSupabaseConfigured && user ? (
+              <div className="flex items-center gap-2">
+                <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-semibold text-white/55">
+                  {isPro ? 'Pro' : `${trialRemaining} trial export${trialRemaining === 1 ? '' : 's'} left`}
+                </span>
+                {!isPro && <a href="https://paystack.shop/pay/yl0xsmgy4e" target="_blank" rel="noopener noreferrer" className="rounded-full bg-[#00FF62] px-2.5 py-1 text-[11px] font-bold text-black transition hover:bg-[#66ff9a]">Upgrade</a>}
+                <span className="max-w-[180px] truncate text-xs text-white/55">{user.email}</span>
+                <button type="button" onClick={handleSignOut} aria-label="Sign out" className="rounded-full p-1.5 text-white/55 transition hover:bg-white/10 hover:text-white">
+                  <LogOut className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ) : <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/50">Offline mode</div>}
           </div>
         </div>
       </header>
