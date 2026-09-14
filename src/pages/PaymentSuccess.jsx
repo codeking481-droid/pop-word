@@ -26,6 +26,9 @@ export default function PaymentSuccess() {
     const result = await response.json();
     if (response.ok && result.pro === true) {
       setState({ status: 'success', message: 'Your PopWord Pro plan is active for 30 days.' });
+      window.setTimeout(() => {
+        window.location.assign('/');
+      }, 1800);
     } else {
       setState({ status: 'error', message: result.error || 'Payment is not verified yet.' });
     }
