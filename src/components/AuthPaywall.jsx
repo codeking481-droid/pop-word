@@ -48,7 +48,16 @@ export default function PaywallModal({ user, downloadCount, isPro, onClose, onRe
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-5 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="paywall-title" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
       <div onClick={(event) => event.stopPropagation()} className="relative w-full max-w-md rounded-3xl border border-white/10 bg-[#161616] p-6 shadow-2xl">
-        <button type="button" onClick={onClose} aria-label="Close paywall" className="absolute right-3 top-3 z-10 flex h-9 w-9 items-center justify-center rounded-full text-white/60 hover:bg-white/10 hover:text-white"><X className="h-4 w-4" /></button>
+        <button
+          type="button"
+          aria-label="Close paywall"
+          onClick={onClose}
+          onPointerDown={(event) => event.stopPropagation()}
+          onTouchEnd={(event) => { event.stopPropagation(); onClose(); }}
+          className="absolute right-2 top-2 z-20 flex h-11 w-11 cursor-pointer items-center justify-center rounded-full bg-white/5 text-white/70 transition hover:bg-white/15 hover:text-white active:bg-white/20"
+        >
+          <X className="h-5 w-5" />
+        </button>
         <LockKeyhole className="mb-4 h-8 w-8 text-[#00FF62]" />
         <h2 id="paywall-title" className="text-xl font-bold">Unlock unlimited exports</h2>
         <p className="mt-2 text-sm leading-relaxed text-white/60">
