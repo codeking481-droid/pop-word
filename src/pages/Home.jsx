@@ -153,15 +153,23 @@ export default function Home() {
         await new Promise((resolve, reject) => {
           const existing = document.querySelector('script[data-paystack-inline]');
           if (existing) {
+            if (window.PaystackPop || (existing instanceof HTMLScriptElement && existing.dataset.loaded === 'true')) {
+              resolve();
+              return;
+            }
             existing.addEventListener('load', resolve, { once: true });
             existing.addEventListener('error', reject, { once: true });
+            window.setTimeout(() => reject(new Error('Paystack script timed out')), 10000);
             return;
           }
           const script = document.createElement('script');
           script.src = 'https://js.paystack.co/v1/inline.js';
           script.async = true;
           script.dataset.paystackInline = 'true';
-          script.onload = resolve;
+          script.onload = () => {
+            script.dataset.loaded = 'true';
+            resolve();
+          };
           script.onerror = reject;
           document.head.appendChild(script);
         });

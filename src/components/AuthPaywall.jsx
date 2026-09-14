@@ -52,7 +52,10 @@ export default function PaywallModal({ user, downloadCount, isPro, onClose, onRe
           type="button"
           aria-label="Close paywall"
           onClick={onClose}
-          onPointerUp={onClose}
+          onPointerDown={(event) => {
+            event.preventDefault();
+            onClose();
+          }}
           className="absolute right-2 top-2 z-20 flex h-11 w-11 cursor-pointer items-center justify-center rounded-full bg-white/5 text-white/70 transition hover:bg-white/15 hover:text-white active:bg-white/20"
         >
           <X className="h-5 w-5" />
