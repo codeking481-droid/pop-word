@@ -236,15 +236,19 @@ export default function Home() {
   const handleExportVideo = handleGenerate;
 
   const generateBatch = async () => {
-    if (!(await ensureDownloadAccess())) return;
     const scripts = batchScripts.split(/^---\s*$|\n---\s*$|\n---\n/m).map((s) => s.trim()).filter(Boolean);
     if (!scripts.length) { toast.error('Add at least one script'); return; }
     const renderer = rendererRef.current;
     if (!renderer) { toast.error('Preview is still loading'); return; }
     setBatchProgress({ current: 0, total: scripts.length });
     setExporting({ type: 'BATCH', progress: 0 });
+    let stoppedByLimit = false;
     try {
       for (let i = 0; i < scripts.length; i++) {
+        if (!(await ensureDownloadAccess())) {
+          stoppedByLimit = true;
+          break;
+        }
         setBatchProgress({ current: i, total: scripts.length });
         setExporting({ type: 'BATCH', progress: i / scripts.length });
         setOptions((o) => ({ ...o, script: scripts[i] }));
@@ -265,7 +269,7 @@ export default function Home() {
         }
         setBatchProgress({ current: i + 1, total: scripts.length });
       }
-      toast.success(`Done — ${scripts.length} videos rendered`);
+      toast.success(stoppedByLimit ? 'Export stopped at your account limit' : `Done — ${scripts.length} videos rendered`);
     } finally {
       setBatchProgress(null);
       setExporting(null);
@@ -273,16 +277,20 @@ export default function Home() {
   };
 
   const handleMultiExport = async () => {
-    if (!(await ensureDownloadAccess())) return;
     const ctx = ensureScript();
     if (!ctx) return;
     setMultiExporting(true);
     const aspects = ['9:16', '1:1', '4:5', '16:9'];
     const original = options.aspect;
     const completed = [];
+    let stoppedByLimit = false;
     setExporting({ type: 'ALL', progress: 0 });
     try {
       for (const a of aspects) {
+        if (!(await ensureDownloadAccess())) {
+          stoppedByLimit = true;
+          break;
+        }
         setOptions((o) => ({ ...o, aspect: a }));
         const r = ctx.r;
         r.setOptions({ aspect: a });
@@ -303,7 +311,7 @@ export default function Home() {
       setExporting(null);
       setMultiExporting(false);
     }
-    toast.success(`Exported ${completed.length} of ${aspects.length} formats`);
+    toast.success(stoppedByLimit ? `Export stopped after ${completed.length} format${completed.length === 1 ? '' : 's'}` : `Exported ${completed.length} of ${aspects.length} formats`);
   };
 
   return (
