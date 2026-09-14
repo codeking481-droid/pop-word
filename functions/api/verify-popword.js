@@ -38,6 +38,24 @@ async function patchTable(baseUrl, serviceKey, table, filter, values, optional =
   return Boolean(rows?.length);
 }
 
+async function createSubscription(baseUrl, serviceKey, userId, email, values) {
+  const url = new URL('/rest/v1/subscriptions', baseUrl);
+  const result = await fetch(url, {
+    method: 'POST',
+    headers: {
+      apikey: serviceKey,
+      Authorization: `Bearer ${serviceKey}`,
+      'Content-Type': 'application/json',
+      Prefer: 'return=minimal',
+    },
+    body: JSON.stringify({ user_id: userId, email, ...values }),
+  });
+  if (!result.ok) {
+    const details = await result.text();
+    throw new Error(`Supabase subscriptions create failed (${result.status}): ${details.slice(0, 240)}`);
+  }
+}
+
 export async function onRequestGet({ request, env }) {
   const secret = env.PAYSTACK_SECRET_KEY;
   const supabaseUrl = env.SUPABASE_URL || env.VITE_SUPABASE_URL;
@@ -56,7 +74,8 @@ export async function onRequestGet({ request, env }) {
   });
   const authData = await authResponse.json();
   const authenticatedEmail = authData?.email?.trim().toLowerCase();
-  if (!authResponse.ok || !authenticatedEmail || authenticatedEmail !== requestedEmail) {
+  const userId = authData?.id;
+  if (!authResponse.ok || !authenticatedEmail || !userId || authenticatedEmail !== requestedEmail) {
     return json({ error: 'Authenticated email does not match payment email' }, 403);
   }
 
@@ -95,14 +114,15 @@ export async function onRequestGet({ request, env }) {
   };
 
   try {
-    const profileUpdated = await patchTable(supabaseUrl, serviceKey, 'profiles', { email: authenticatedEmail }, profileValues);
+    const profileUpdated = await patchTable(supabaseUrl, serviceKey, 'profiles', { email: authenticatedEmail }, profileValues, true);
     const subscriptionUpdated = await patchTable(supabaseUrl, serviceKey, 'subscriptions', { email: authenticatedEmail }, values, true);
     await patchTable(supabaseUrl, serviceKey, 'users', { email: authenticatedEmail }, {
       is_pro: true,
       pro_plan: profileValues.pro_plan,
       pro_since: profileValues.pro_since,
     }, true);
-    if (!profileUpdated && !subscriptionUpdated) return json({ error: 'Pro account record not found' }, 404);
+    if (!subscriptionUpdated) await createSubscription(supabaseUrl, serviceKey, userId, authenticatedEmail, values);
+    if (!profileUpdated && !subscriptionUpdated) console.info('Pro activation created a new subscription record');
   } catch (error) {
     console.error(error);
     return json({ error: error.message.startsWith('Supabase subscriptions') ? error.message : 'Pro activation failed' }, 500);
