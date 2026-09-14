@@ -11,7 +11,7 @@ function json(body, status = 200) {
   });
 }
 
-async function patchTable(baseUrl, serviceKey, table, filter, values) {
+async function patchTable(baseUrl, serviceKey, table, filter, values, optional = false) {
   const url = new URL(`/rest/v1/${table}`, baseUrl);
   for (const [key, value] of Object.entries(filter)) url.searchParams.set(key, `eq.${value}`);
   const result = await fetch(url, {
@@ -20,14 +20,22 @@ async function patchTable(baseUrl, serviceKey, table, filter, values) {
       apikey: serviceKey,
       Authorization: `Bearer ${serviceKey}`,
       'Content-Type': 'application/json',
-      Prefer: 'return=minimal',
+      Prefer: 'return=representation',
     },
     body: JSON.stringify(values),
   });
   if (!result.ok && result.status !== 404) {
-    throw new Error(`Supabase ${table} update failed (${result.status})`);
+    const details = await result.text();
+    if (optional) {
+      console.warn(`Optional Supabase ${table} update skipped (${result.status})`);
+      return false;
+    }
+    throw new Error(`Supabase ${table} update failed (${result.status}): ${details.slice(0, 240)}`);
   }
-  return result.status !== 404;
+  if (result.status === 404) return false;
+  const rows = await result.json();
+  if (!rows?.length && !optional) throw new Error(`Supabase ${table} account row not found`);
+  return Boolean(rows?.length);
 }
 
 export async function onRequestGet({ request, env }) {
@@ -87,17 +95,17 @@ export async function onRequestGet({ request, env }) {
   };
 
   try {
-    const profileUpdated = await patchTable(supabaseUrl, serviceKey, 'profiles', { email: authenticatedEmail }, profileValues);
+    const profileUpdated = await patchTable(supabaseUrl, serviceKey, 'profiles', { email: authenticatedEmail }, profileValues, true);
     const subscriptionUpdated = await patchTable(supabaseUrl, serviceKey, 'subscriptions', { email: authenticatedEmail }, values);
     await patchTable(supabaseUrl, serviceKey, 'users', { email: authenticatedEmail }, {
       is_pro: true,
       pro_plan: profileValues.pro_plan,
       pro_since: profileValues.pro_since,
-    });
+    }, true);
     if (!profileUpdated && !subscriptionUpdated) return json({ error: 'Pro account record not found' }, 404);
   } catch (error) {
     console.error(error);
-    return json({ error: 'Pro activation failed' }, 500);
+    return json({ error: error.message.startsWith('Supabase subscriptions') ? error.message : 'Pro activation failed' }, 500);
   }
 
   return json({ pro: true });
