@@ -5,19 +5,11 @@ import toast, { Toaster } from 'react-hot-toast';
 import ControlPanel from '@/components/popgen/ControlPanel';
 import PreviewPanel from '@/components/popgen/PreviewPanel';
 import { recordVideo, downloadBlob } from '@/components/popgen/exporter';
-import { supabase, isSupabaseConfigured } from '@/lib/supabase';
-import PaywallModal, { AccountStatus, SignupGate } from '@/components/AuthPaywall';
 
 export default function Home() {
   const rendererRef = useRef(null);
   const ownedUrlsRef = useRef(new Set());
   const [exporting, setExporting] = useState(null);
-  const [user, setUser] = useState(null);
-  const [authReady, setAuthReady] = useState(!isSupabaseConfigured);
-  const [subscription, setSubscription] = useState(null);
-  const [paywallOpen, setPaywallOpen] = useState(false);
-  const [refreshingSubscription, setRefreshingSubscription] = useState(false);
-  const [paying, setPaying] = useState(false);
 
   const [options, setOptions] = useState({
     script: '',
@@ -71,158 +63,6 @@ export default function Home() {
   const [batchProgress, setBatchProgress] = useState(null);
   const [multiExporting, setMultiExporting] = useState(false);
 
-  const loadSubscription = async (currentUser) => {
-    if (!supabase || !currentUser) {
-      setSubscription(null);
-      return;
-    }
-    const { data, error } = await supabase
-      .from('subscriptions')
-      .select('download_count, pro_expiry')
-      .eq('email', currentUser.email)
-      .maybeSingle();
-    if (error) {
-      toast.error(`Could not load account limits: ${error.message}`);
-      return;
-    }
-    setSubscription(data);
-  };
-
-  useEffect(() => {
-    if (!supabase) return undefined;
-    let active = true;
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!active) return;
-      setUser(session?.user || null);
-      setAuthReady(true);
-      if (session?.user) loadSubscription(session.user);
-    });
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user || null);
-      setAuthReady(true);
-      if (session?.user) loadSubscription(session.user);
-      else setSubscription(null);
-    });
-    return () => {
-      active = false;
-      listener.subscription.unsubscribe();
-    };
-  }, []);
-
-  const signIn = async () => {
-    if (!supabase) return;
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: window.location.origin },
-    });
-    if (error) toast.error(error.message);
-  };
-
-  const signOut = async () => {
-    if (!supabase) return;
-    const { error } = await supabase.auth.signOut();
-    if (error) toast.error(error.message);
-  };
-
-  const isPro = Boolean(subscription?.pro_expiry && new Date(subscription.pro_expiry).getTime() > Date.now());
-  const refreshSubscription = async () => {
-    setRefreshingSubscription(true);
-    try {
-      await loadSubscription(user);
-    } finally {
-      setRefreshingSubscription(false);
-    }
-  };
-  useEffect(() => {
-    if (!paywallOpen) return undefined;
-    const closeOnEscape = (event) => {
-      if (event.key === 'Escape') setPaywallOpen(false);
-    };
-    window.addEventListener('keydown', closeOnEscape);
-    return () => window.removeEventListener('keydown', closeOnEscape);
-  }, [paywallOpen]);
-  const handlePay = async () => {
-    if (!user) return;
-    const publicKey = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY;
-    if (!publicKey) {
-      toast.error('Paystack is not configured in Cloudflare yet.');
-      return;
-    }
-    if (!window.PaystackPop) {
-      try {
-        await new Promise((resolve, reject) => {
-          const existing = document.querySelector('script[data-paystack-inline]');
-          if (existing) {
-            if (window.PaystackPop || (existing instanceof HTMLScriptElement && existing.dataset.loaded === 'true')) {
-              resolve();
-              return;
-            }
-            existing.addEventListener('load', resolve, { once: true });
-            existing.addEventListener('error', reject, { once: true });
-            window.setTimeout(() => reject(new Error('Paystack script timed out')), 10000);
-            return;
-          }
-          const script = document.createElement('script');
-          script.src = 'https://js.paystack.co/v1/inline.js';
-          script.async = true;
-          script.dataset.paystackInline = 'true';
-          script.onload = () => {
-            script.dataset.loaded = 'true';
-            resolve();
-          };
-          script.onerror = reject;
-          document.head.appendChild(script);
-        });
-      } catch {
-        toast.error('Could not load Paystack checkout. Check your connection and try again.');
-        return;
-      }
-    }
-    if (!window.PaystackPop) {
-      toast.error('Paystack checkout is unavailable in this browser.');
-      return;
-    }
-    setPaying(true);
-    try {
-      const handler = window.PaystackPop.setup({
-        key: publicKey,
-        email: user.email,
-        amount: 300000,
-        currency: 'NGN',
-        ref: `popword_${user.id}_${Date.now()}`,
-        metadata: { user_id: user.id },
-        callback: async () => {
-          setPaying(false);
-          await refreshSubscription();
-          toast.success('Payment received. Pro will activate after verification.');
-        },
-        onClose: () => setPaying(false),
-      });
-      handler.openIframe();
-    } catch (error) {
-      setPaying(false);
-      toast.error(error?.message || 'Paystack could not open checkout.');
-    }
-  };
-  const ensureDownloadAccess = async () => {
-    if (!isSupabaseConfigured) return true;
-    if (!user) {
-      toast.error('Sign in with Google to export');
-      return false;
-    }
-    if (isPro) return true;
-    const { data, error } = await supabase.rpc('consume_download');
-    if (error) {
-      toast.error(`Could not record export: ${error.message}`);
-      return false;
-    }
-    if (!data) {
-      setPaywallOpen(true);
-      return false;
-    }
-    setSubscription((current) => ({ ...(current || {}), download_count: (current?.download_count || 0) + 1 }));
-    return true;
-  };
 
   useEffect(() => () => {
     for (const url of ownedUrlsRef.current) URL.revokeObjectURL(url);
@@ -296,7 +136,6 @@ export default function Home() {
   const applyPreset = (patch) => setOptions((o) => ({ ...o, ...patch }));
 
   const handleGenerate = async () => {
-    if (!(await ensureDownloadAccess())) return;
     const ctx = ensureScript();
     if (!ctx) return;
     setExporting({ type: 'MP4', progress: 0 });
@@ -323,13 +162,8 @@ export default function Home() {
     if (!renderer) { toast.error('Preview is still loading'); return; }
     setBatchProgress({ current: 0, total: scripts.length });
     setExporting({ type: 'BATCH', progress: 0 });
-    let stoppedByLimit = false;
     try {
       for (let i = 0; i < scripts.length; i++) {
-        if (!(await ensureDownloadAccess())) {
-          stoppedByLimit = true;
-          break;
-        }
         setBatchProgress({ current: i, total: scripts.length });
         setExporting({ type: 'BATCH', progress: i / scripts.length });
         setOptions((o) => ({ ...o, script: scripts[i] }));
@@ -350,7 +184,7 @@ export default function Home() {
         }
         setBatchProgress({ current: i + 1, total: scripts.length });
       }
-      toast.success(stoppedByLimit ? 'Export stopped at your account limit' : `Done — ${scripts.length} videos rendered`);
+      toast.success(`Done — ${scripts.length} videos rendered`);
     } finally {
       setBatchProgress(null);
       setExporting(null);
@@ -364,14 +198,9 @@ export default function Home() {
     const aspects = ['9:16', '1:1', '4:5', '16:9'];
     const original = options.aspect;
     const completed = [];
-    let stoppedByLimit = false;
     setExporting({ type: 'ALL', progress: 0 });
     try {
       for (const a of aspects) {
-        if (!(await ensureDownloadAccess())) {
-          stoppedByLimit = true;
-          break;
-        }
         setOptions((o) => ({ ...o, aspect: a }));
         const r = ctx.r;
         r.setOptions({ aspect: a });
@@ -392,7 +221,7 @@ export default function Home() {
       setExporting(null);
       setMultiExporting(false);
     }
-    toast.success(stoppedByLimit ? `Export stopped after ${completed.length} format${completed.length === 1 ? '' : 's'}` : `Exported ${completed.length} of ${aspects.length} formats`);
+    toast.success(`Exported ${completed.length} of ${aspects.length} formats`);
   };
 
   return (
@@ -410,8 +239,7 @@ export default function Home() {
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <AccountStatus user={user} isPro={isPro} onLogin={signIn} onLogout={signOut} onOpenPaywall={() => setPaywallOpen(true)} />
-            {isSupabaseConfigured && !user && <span className="hidden text-[11px] text-white/35 sm:inline">3 free exports after sign-in</span>}
+            <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/50">Offline mode</div>
           </div>
         </div>
       </header>
@@ -461,17 +289,6 @@ export default function Home() {
           success: { iconTheme: { primary: '#00FF62', secondary: '#0A0A0A' } },
         }}
       />
-      <PaywallModal
-        user={user}
-        downloadCount={subscription?.download_count || 0}
-        isPro={isPro}
-        onClose={() => setPaywallOpen(false)}
-        onPay={handlePay}
-        paying={paying}
-        refreshing={refreshingSubscription}
-        onRefresh={refreshSubscription}
-      />
-      {isSupabaseConfigured && authReady && !user && <SignupGate onLogin={signIn} />}
     </div>
   );
 }
