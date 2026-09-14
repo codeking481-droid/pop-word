@@ -24,22 +24,29 @@ The production output is written to `dist/`.
 
 ## Paystack Pro activation
 
-The Upgrade link opens Paystack Checkout. Pro access is activated only by the
-Cloudflare Pages Function after Paystack confirms a successful transaction.
+The Upgrade link opens the configured Paystack payment page. Paystack should
+redirect successful payments to `/payment-success`. That page sends the
+transaction reference to the Cloudflare Pages Function, which verifies the
+transaction server-side and activates Pro without using a Paystack webhook.
 
 Set these Cloudflare Pages **Production** variables and secrets:
 
 - `PAYSTACK_SECRET_KEY` (Secret)
 - `SUPABASE_SERVICE_ROLE_KEY` (Secret)
-- `VITE_SUPABASE_URL` (Plaintext URL, already used by the frontend; the
-  deployed function also has the current project URL as a fallback)
+- `SUPABASE_URL` (Plaintext URL)
+- `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` (frontend auth)
+- `VITE_PAYSTACK_PAGE` (Paystack payment link)
 
-Run `supabase/schema.sql` in the Supabase SQL editor, then configure this
-Paystack webhook URL:
+Configure the Paystack redirect URL as:
 
-`https://pop-word.pages.dev/api/paystack-webhook`
+`https://pop-word.pages.dev/payment-success`
 
-Never expose either secret in Vite or browser code.
+The verification endpoint is:
+
+`https://pop-word.pages.dev/api/verify-popword`
+
+Never expose `PAYSTACK_SECRET_KEY` or `SUPABASE_SERVICE_ROLE_KEY` in Vite or
+browser code.
 
 ## Cloudflare Pages
 

@@ -315,7 +315,7 @@ export default function Home() {
                 <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-semibold text-white/55">
                   {isPro ? 'Pro' : `${trialRemaining} trial export${trialRemaining === 1 ? '' : 's'} left`}
                 </span>
-                {!isPro && <a href="https://paystack.shop/pay/yl0xsmgy4e" target="_blank" rel="noopener noreferrer" className="rounded-full bg-[#00FF62] px-2.5 py-1 text-[11px] font-bold text-black transition hover:bg-[#66ff9a]">Upgrade</a>}
+                {!isPro && <a href={import.meta.env.VITE_PAYSTACK_PAGE || 'https://paystack.shop/pay/yl0xsmgy4e'} target="_blank" rel="noopener noreferrer" className="rounded-full bg-[#00FF62] px-2.5 py-1 text-[11px] font-bold text-black transition hover:bg-[#66ff9a]">Upgrade</a>}
                 <span className="max-w-[180px] truncate text-xs text-white/55">{user.email}</span>
                 <button type="button" onClick={handleSignOut} aria-label="Sign out" className="rounded-full p-1.5 text-white/55 transition hover:bg-white/10 hover:text-white">
                   <LogOut className="h-3.5 w-3.5" />
