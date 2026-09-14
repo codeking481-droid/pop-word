@@ -133,6 +133,14 @@ export default function Home() {
       setRefreshingSubscription(false);
     }
   };
+  useEffect(() => {
+    if (!paywallOpen) return undefined;
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape') setPaywallOpen(false);
+    };
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, [paywallOpen]);
   const handlePay = () => {
     if (!user || !window.PaystackPop) {
       toast.error('Secure checkout is still loading. Please try again.');
