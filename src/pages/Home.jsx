@@ -17,6 +17,7 @@ export default function Home() {
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState('');
   const [subscription, setSubscription] = useState(null);
+  const [upgradeLoading, setUpgradeLoading] = useState(false);
 
   const loadSubscription = async (userId) => {
     const { data, error } = await supabase.from('subscriptions')
@@ -119,10 +120,28 @@ export default function Home() {
 
   const trialRemaining = Math.max(0, 3 - (subscription?.download_count || 0));
   const isPro = Boolean(subscription?.pro_expiry && new Date(subscription.pro_expiry).getTime() > Date.now());
-  const paystackPage = import.meta.env.VITE_PAYSTACK_PAGE || 'https://paystack.shop/pay/zhrui-2-45';
-  const paymentUrl = user?.email
-    ? `${paystackPage}${paystackPage.includes('?') ? '&' : '?'}email=${encodeURIComponent(user.email)}`
-    : paystackPage;
+  const handleUpgrade = async () => {
+    if (!user?.email || upgradeLoading) return;
+    setUpgradeLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('Your sign-in session has expired');
+      const response = await fetch('/api/create-popword-payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ email: user.email }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.authorization_url) throw new Error(result.error || 'Could not start checkout');
+      window.location.assign(result.authorization_url);
+    } catch (error) {
+      toast.error(error.message || 'Could not start checkout');
+      setUpgradeLoading(false);
+    }
+  };
 
   const signIn = async () => {
     if (!supabase) return;
@@ -319,7 +338,7 @@ export default function Home() {
                 <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-semibold text-white/55">
                   {isPro ? 'Pro' : `${trialRemaining} trial export${trialRemaining === 1 ? '' : 's'} left`}
                 </span>
-                {!isPro && <a href={paymentUrl} target="_blank" rel="noopener noreferrer" className="rounded-full bg-[#00FF62] px-2.5 py-1 text-[11px] font-bold text-black transition hover:bg-[#66ff9a]">Upgrade</a>}
+                {!isPro && <button type="button" onClick={handleUpgrade} disabled={upgradeLoading} className="rounded-full bg-[#00FF62] px-2.5 py-1 text-[11px] font-bold text-black transition hover:bg-[#66ff9a] disabled:cursor-wait disabled:opacity-60">{upgradeLoading ? 'Opening...' : 'Upgrade'}</button>}
                 <span className="max-w-[180px] truncate text-xs text-white/55">{user.email}</span>
                 <button type="button" onClick={handleSignOut} aria-label="Sign out" className="rounded-full p-1.5 text-white/55 transition hover:bg-white/10 hover:text-white">
                   <LogOut className="h-3.5 w-3.5" />

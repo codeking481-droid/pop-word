@@ -32,6 +32,8 @@ transaction server-side and activates Pro without using a Paystack webhook.
 Set these Cloudflare Pages **Production** variables and secrets:
 
 - `PAYSTACK_SECRET_KEY` (Secret)
+- `PAYSTACK_PLAN_CODE` (Secret or plaintext; set to `PLN_hjzusad1jus87lw` in
+  test mode)
 - `SUPABASE_SERVICE_ROLE_KEY` (Secret)
 - `SUPABASE_URL` (Plaintext URL)
 - `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` (frontend auth)
@@ -40,6 +42,10 @@ Set these Cloudflare Pages **Production** variables and secrets:
 Configure the Paystack redirect URL as:
 
 `https://pop-word.pages.dev/payment-success`
+
+PopWord starts Checkout through `/api/create-popword-payment`, which supplies
+this callback URL to Paystack. This avoids relying on a hosted subscription
+page that has no redirect setting.
 
 The verification endpoint is:
 
