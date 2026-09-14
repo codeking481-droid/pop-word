@@ -48,7 +48,14 @@ async function createSubscription(baseUrl, serviceKey, userId, email, values) {
       'Content-Type': 'application/json',
       Prefer: 'return=minimal',
     },
-    body: JSON.stringify({ user_id: userId, email, ...values }),
+    body: JSON.stringify({
+      user_id: userId,
+      email,
+      is_pro: true,
+      pro_expiry: values.pro_expiry,
+      pro_plan: values.pro_plan,
+      download_count: 0,
+    }),
   });
   if (!result.ok) {
     const details = await result.text();
@@ -101,16 +108,14 @@ export async function onRequestGet({ request, env }) {
   }
 
   const values = {
+    is_pro: true,
     pro_expiry: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-    status: 'pro',
+    pro_plan: 'PopWord Pro Monthly - TEST',
     download_count: 0,
-    paystack_ref: reference,
-    activated_at: new Date().toISOString(),
   };
   const profileValues = {
     is_pro: true,
-    pro_plan: 'PopWord Pro Monthly',
-    pro_since: values.activated_at,
+    pro_plan: values.pro_plan,
   };
 
   try {
