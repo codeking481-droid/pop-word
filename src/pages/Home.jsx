@@ -119,7 +119,7 @@ export default function Home() {
 
   const trialRemaining = Math.max(0, 3 - (subscription?.download_count || 0));
   const isPro = Boolean(subscription?.pro_expiry && new Date(subscription.pro_expiry).getTime() > Date.now());
-  const paystackPage = import.meta.env.VITE_PAYSTACK_PAGE || 'https://paystack.shop/pay/yl0xsmgy4e';
+  const paystackPage = import.meta.env.VITE_PAYSTACK_PAGE || 'https://paystack.shop/pay/zhrui-2-45';
   const paymentUrl = user?.email
     ? `${paystackPage}${paystackPage.includes('?') ? '&' : '?'}email=${encodeURIComponent(user.email)}`
     : paystackPage;

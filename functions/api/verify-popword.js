@@ -1,5 +1,8 @@
-const PAYSTACK_PLAN = 'PLN_w7htm2j67axsrv9';
-const PAYSTACK_AMOUNT = 300000;
+const PAYSTACK_PLANS = new Set([
+  'PLN_hjzusad1jus87lw',
+  'PLN_w7htm2j67axsrv9',
+]);
+const PAYSTACK_AMOUNTS = new Set([300000, 3000]);
 
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -58,8 +61,9 @@ export async function onRequestGet({ request, env }) {
   const verification = await verifyResponse.json();
   const transaction = verification?.data;
   const transactionEmail = transaction?.customer?.email?.trim().toLowerCase();
-  const validPlan = transaction?.plan?.plan_code === PAYSTACK_PLAN || transaction?.plan === PAYSTACK_PLAN;
-  const validAmount = transaction?.amount === PAYSTACK_AMOUNT;
+  const planCode = transaction?.plan?.plan_code || transaction?.plan;
+  const validPlan = PAYSTACK_PLANS.has(planCode);
+  const validAmount = PAYSTACK_AMOUNTS.has(transaction?.amount);
   if (
     verification?.status !== true ||
     transaction?.status !== 'success' ||
