@@ -5,11 +5,16 @@ import toast, { Toaster } from 'react-hot-toast';
 import ControlPanel from '@/components/popgen/ControlPanel';
 import PreviewPanel from '@/components/popgen/PreviewPanel';
 import { recordVideo, downloadBlob } from '@/components/popgen/exporter';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import PaywallModal, { AccountStatus } from '@/components/AuthPaywall';
 
 export default function Home() {
   const rendererRef = useRef(null);
   const ownedUrlsRef = useRef(new Set());
   const [exporting, setExporting] = useState(null);
+  const [user, setUser] = useState(null);
+  const [subscription, setSubscription] = useState(null);
+  const [paywallOpen, setPaywallOpen] = useState(false);
 
   const [options, setOptions] = useState({
     script: '',
@@ -62,6 +67,78 @@ export default function Home() {
   const [batchScripts, setBatchScripts] = useState('');
   const [batchProgress, setBatchProgress] = useState(null);
   const [multiExporting, setMultiExporting] = useState(false);
+
+  const loadSubscription = async (currentUser) => {
+    if (!supabase || !currentUser) {
+      setSubscription(null);
+      return;
+    }
+    const { data, error } = await supabase
+      .from('subscriptions')
+      .select('download_count, pro_expiry')
+      .eq('email', currentUser.email)
+      .maybeSingle();
+    if (error) {
+      toast.error(`Could not load account limits: ${error.message}`);
+      return;
+    }
+    setSubscription(data);
+  };
+
+  useEffect(() => {
+    if (!supabase) return undefined;
+    let active = true;
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!active) return;
+      setUser(session?.user || null);
+      if (session?.user) loadSubscription(session.user);
+    });
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null);
+      if (session?.user) loadSubscription(session.user);
+      else setSubscription(null);
+    });
+    return () => {
+      active = false;
+      listener.subscription.unsubscribe();
+    };
+  }, []);
+
+  const signIn = async () => {
+    if (!supabase) return;
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin },
+    });
+    if (error) toast.error(error.message);
+  };
+
+  const signOut = async () => {
+    if (!supabase) return;
+    const { error } = await supabase.auth.signOut();
+    if (error) toast.error(error.message);
+  };
+
+  const isPro = Boolean(subscription?.pro_expiry && new Date(subscription.pro_expiry).getTime() > Date.now());
+  const ensureDownloadAccess = async () => {
+    if (!isSupabaseConfigured) return true;
+    if (!user) {
+      toast.error('Sign in with Google to export');
+      return false;
+    }
+    if (isPro) return true;
+    const { data, error } = await supabase.rpc('consume_download');
+    if (error) {
+      toast.error(`Could not record export: ${error.message}`);
+      return false;
+    }
+    if (!data) {
+      setPaywallOpen(true);
+      return false;
+    }
+    setSubscription((current) => ({ ...(current || {}), download_count: (current?.download_count || 0) + 1 }));
+    return true;
+  };
 
   useEffect(() => () => {
     for (const url of ownedUrlsRef.current) URL.revokeObjectURL(url);
@@ -135,6 +212,7 @@ export default function Home() {
   const applyPreset = (patch) => setOptions((o) => ({ ...o, ...patch }));
 
   const handleGenerate = async () => {
+    if (!(await ensureDownloadAccess())) return;
     const ctx = ensureScript();
     if (!ctx) return;
     setExporting({ type: 'MP4', progress: 0 });
@@ -155,6 +233,7 @@ export default function Home() {
   const handleExportVideo = handleGenerate;
 
   const generateBatch = async () => {
+    if (!(await ensureDownloadAccess())) return;
     const scripts = batchScripts.split(/^---\s*$|\n---\s*$|\n---\n/m).map((s) => s.trim()).filter(Boolean);
     if (!scripts.length) { toast.error('Add at least one script'); return; }
     const renderer = rendererRef.current;
@@ -191,6 +270,7 @@ export default function Home() {
   };
 
   const handleMultiExport = async () => {
+    if (!(await ensureDownloadAccess())) return;
     const ctx = ensureScript();
     if (!ctx) return;
     setMultiExporting(true);
@@ -237,9 +317,9 @@ export default function Home() {
               <div className="text-[11px] text-white/40">Viral Word Pop Generator</div>
             </div>
           </div>
-          <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/50">
-            <span className="h-2 w-2 rounded-full bg-[#00FF62]" />
-            Offline mode
+          <div className="flex items-center gap-3">
+            <AccountStatus user={user} isPro={isPro} onLogin={signIn} onLogout={signOut} onOpenPaywall={() => setPaywallOpen(true)} />
+            {isSupabaseConfigured && !user && <span className="hidden text-[11px] text-white/35 sm:inline">3 free exports after sign-in</span>}
           </div>
         </div>
       </header>
@@ -288,6 +368,13 @@ export default function Home() {
           },
           success: { iconTheme: { primary: '#00FF62', secondary: '#0A0A0A' } },
         }}
+      />
+      <PaywallModal
+        user={user}
+        downloadCount={subscription?.download_count || 0}
+        isPro={isPro}
+        onClose={() => setPaywallOpen(false)}
+        onRefresh={() => { setPaywallOpen(false); loadSubscription(user); }}
       />
     </div>
   );
