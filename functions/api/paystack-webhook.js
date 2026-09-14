@@ -1,4 +1,5 @@
 const PAYSTACK_API = 'https://api.paystack.co';
+const DEFAULT_SUPABASE_URL = 'https://iqlwubovcnugilmdudir.supabase.co';
 const EXPECTED_AMOUNT = 300000;
 const EXPECTED_CURRENCY = 'NGN';
 
@@ -51,7 +52,7 @@ async function supabaseRequest(url, serviceRoleKey, options = {}) {
 
 export async function onRequestPost({ request, env }) {
   const secret = env.PAYSTACK_SECRET_KEY;
-  const supabaseUrl = env.VITE_SUPABASE_URL;
+  const supabaseUrl = env.VITE_SUPABASE_URL || DEFAULT_SUPABASE_URL;
   const serviceRoleKey = env.SUPABASE_SERVICE_ROLE_KEY;
   const signature = request.headers.get('x-paystack-signature');
 

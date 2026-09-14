@@ -31,7 +31,8 @@ Set these Cloudflare Pages **Production** variables and secrets:
 
 - `PAYSTACK_SECRET_KEY` (Secret)
 - `SUPABASE_SERVICE_ROLE_KEY` (Secret)
-- `VITE_SUPABASE_URL` (Plaintext URL, already used by the frontend)
+- `VITE_SUPABASE_URL` (Plaintext URL, already used by the frontend; the
+  deployed function also has the current project URL as a fallback)
 
 Run `supabase/schema.sql` in the Supabase SQL editor, then configure this
 Paystack webhook URL:
