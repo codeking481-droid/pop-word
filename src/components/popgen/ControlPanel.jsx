@@ -44,7 +44,7 @@ function MediaThumb({ item }) {
 export default function ControlPanel({ options, setOptions, onGenerate, exporting, onAddMedia, onSelectMedia, onRemoveMedia, onApplyPreset, batchScripts, setBatchScripts, onGenerateBatch, batchProgress, onMultiExport, multiExporting }) {
   const fileRef = useRef(null);
   const [dragging, setDragging] = useState(false);
-  const [tab, setTab] = useState(options.mode === 'caption' ? 'caption' : 'pop');
+  const [tab, setTab] = useState(options.template || 'pop');
   const busy = !!exporting;
 
   const update = (patch) => setOptions({ ...options, ...patch });
@@ -74,25 +74,37 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
         </div>
       )}
 
-      {/* Tabs */}
+      {/* Template tabs */}
       <div className="flex gap-1 rounded-2xl border border-white/10 bg-black/40 p-1">
-        {['pop', 'caption', 'batch'].map((t) => (
+        {[
+          { id: 'pop', label: 'POP' },
+          { id: 'minimal', label: 'MINIMAL' },
+          { id: 'flow', label: 'FLOW' },
+        ].map((t) => (
           <button
-            key={t}
-            onClick={() => { setTab(t); if (t !== 'batch') update({ mode: t }); }}
-            className={`flex-1 rounded-xl px-3 py-2 text-xs font-bold uppercase tracking-wider transition ${tab === t ? 'bg-[#00FF62] text-black' : 'text-white/60 hover:text-white'}`}
+            key={t.id}
+            onClick={() => { setTab(t.id); update({ template: t.id, mode: t.id === 'pop' ? 'pop' : t.id }); }}
+            className={`flex-1 rounded-xl px-3 py-2 text-xs font-bold tracking-wider transition ${tab === t.id ? 'bg-[#00FF62] text-black' : 'text-white/60 hover:text-white'}`}
           >
-            {t}
+            {t.label}
           </button>
         ))}
       </div>
+      <button
+        onClick={() => setTab('batch')}
+        className="self-start text-[11px] font-semibold uppercase tracking-wider text-white/40 transition hover:text-[#00FF62]"
+      >
+        Open batch tools
+      </button>
 
       {tab === 'batch' ? (
         <BatchPanel value={batchScripts || ''} onChange={setBatchScripts} onGenerate={onGenerateBatch} progress={batchProgress} />
       ) : (
       <>
+      {tab === 'minimal' && <MinimalControls options={options} update={update} />}
+      {tab === 'flow' && <FlowControls options={options} update={update} />}
       {/* Script */}
-      <section>
+      {tab === 'pop' && <section>
         <Label icon={<Sparkles className="h-4 w-4" />}>Your Script</Label>
         <textarea
           value={options.script}
@@ -103,7 +115,7 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
         <div className="mt-1.5 text-right text-xs text-white/40">
           {options.script.trim() ? options.script.trim().split(/\s+/).filter(Boolean).length : 0} words
         </div>
-      </section>
+      </section>}
 
       {/* Aspect ratio */}
       <section>
@@ -371,6 +383,117 @@ function Label({ children, icon }) {
       {icon}
       {children}
     </div>
+  );
+}
+
+function MinimalControls({ options, update }) {
+  const fileRef = useRef(null);
+  const cards = options.minimalCards || [];
+  const [draft, setDraft] = useState('');
+
+  const addTextCard = () => {
+    const text = draft.trim();
+    if (!text || cards.length >= 12) return;
+    update({ minimalCards: [...cards, { id: `text-${Date.now()}`, type: 'text', text }] });
+    setDraft('');
+  };
+
+  const addImageCards = (files) => {
+    const remaining = Math.max(0, 12 - cards.length);
+    const next = Array.from(files || []).filter((file) => file.type.startsWith('image/') || file.type.startsWith('video/')).slice(0, remaining);
+    if (!next.length) return;
+    const additions = next.map((file) => {
+      const url = URL.createObjectURL(file);
+      const isVideo = file.type.startsWith('video/');
+      const image = isVideo ? document.createElement('video') : new Image();
+      image.src = url;
+      if (isVideo) {
+        image.muted = true;
+        image.loop = true;
+        image.playsInline = true;
+        image.load();
+      }
+      return { id: `image-${Date.now()}-${Math.random()}`, type: 'image', image, url, text: file.name };
+    });
+    update({ minimalCards: [...cards, ...additions] });
+  };
+
+  return (
+    <section className="space-y-3">
+      <Label>Minimal cards · {cards.length}/12</Label>
+      <div className="flex gap-2">
+        <input
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') addTextCard(); }}
+          placeholder="Type a card and press Add"
+          className="min-w-0 flex-1 rounded-xl border border-white/10 bg-black/40 px-3 py-2.5 text-sm text-white placeholder:text-white/30 outline-none focus:border-[#00FF62]/60"
+        />
+        <button onClick={addTextCard} disabled={cards.length >= 12} className="rounded-xl bg-[#00FF62] px-3 text-xs font-bold text-black disabled:opacity-40">Add</button>
+      </div>
+      <input ref={fileRef} type="file" accept="image/*,video/*" multiple className="hidden" onChange={(e) => { addImageCards(e.target.files); e.target.value = ''; }} />
+      <button onClick={() => fileRef.current?.click()} disabled={cards.length >= 12} className="w-full rounded-xl border border-dashed border-white/20 px-3 py-3 text-xs font-semibold text-white/60 transition hover:border-[#00FF62]/60 hover:text-[#00FF62] disabled:opacity-40">
+        Upload image or video cards (local only)
+      </button>
+      {cards.length > 0 && (
+        <div className="space-y-1.5">
+          {cards.map((card, index) => (
+            <div key={card.id} className="flex items-center gap-2 rounded-xl border border-white/10 bg-black/30 px-3 py-2">
+              <span className="w-5 text-xs text-white/35">{index + 1}</span>
+              <span className="min-w-0 flex-1 truncate text-xs text-white/75">{card.type === 'image' ? 'Image card' : card.text}</span>
+              <button onClick={() => { if (card.url) URL.revokeObjectURL(card.url); update({ minimalCards: cards.filter((item) => item.id !== card.id) }); }} className="text-white/40 hover:text-red-400" aria-label={`Delete card ${index + 1}`}><X className="h-4 w-4" /></button>
+            </div>
+          ))}
+        </div>
+      )}
+      <div className="grid grid-cols-2 gap-2">
+        <Field label="Card motion">
+          <select value={options.minimalLayout || 'scatter'} onChange={(e) => update({ minimalLayout: e.target.value })} className="w-full rounded-xl border border-white/10 bg-black/40 px-2 py-2 text-xs text-white">
+            <option value="scatter">Scatter</option><option value="floating">Floating</option><option value="grid">Grid</option>
+          </select>
+        </Field>
+        <Field label="Card style">
+          <select value={options.minimalStyle || 'liquid'} onChange={(e) => update({ minimalStyle: e.target.value })} className="w-full rounded-xl border border-white/10 bg-black/40 px-2 py-2 text-xs text-white">
+            <option value="white">White</option><option value="liquid">Liquid Glass</option>
+          </select>
+        </Field>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <Field label="Animated number">
+          <input type="number" value={options.minimalNumber ?? 12} onChange={(e) => update({ minimalNumber: Number(e.target.value) })} className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm text-white" />
+        </Field>
+        <ToggleRow label="Pulse number" on={options.minimalAnimateNumber !== false} onClick={() => update({ minimalAnimateNumber: options.minimalAnimateNumber === false })} />
+      </div>
+      <Field label="Bullet list (one per line)">
+        <textarea value={options.minimalBullets || ''} onChange={(e) => update({ minimalBullets: e.target.value })} placeholder="Fast setup&#10;No account&#10;Export locally" className="h-20 w-full resize-none rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-xs text-white placeholder:text-white/30" />
+      </Field>
+    </section>
+  );
+}
+
+function FlowControls({ options, update }) {
+  return (
+    <section className="space-y-3">
+      <Label>Flow wave</Label>
+      <Field label="Sentence">
+        <textarea value={options.flowSentence || ''} onChange={(e) => update({ flowSentence: e.target.value })} placeholder="Make ideas move" className="h-20 w-full resize-none rounded-xl border border-white/10 bg-black/40 px-3 py-2.5 text-sm text-white placeholder:text-white/30" />
+      </Field>
+      <Field label={`Wave height — ${options.flowWaveHeight || 170}px`}>
+        <input type="range" min="40" max="420" step="10" value={options.flowWaveHeight || 170} onChange={(e) => update({ flowWaveHeight: Number(e.target.value) })} className="pop-range w-full" />
+      </Field>
+      <div className="grid grid-cols-2 gap-3">
+        <Field label={`Speed — ${(options.flowWaveSpeed || 1).toFixed(1)}x`}>
+          <input type="range" min="0.2" max="3" step="0.1" value={options.flowWaveSpeed || 1} onChange={(e) => update({ flowWaveSpeed: Number(e.target.value) })} className="pop-range w-full" />
+        </Field>
+        <Field label={`Frequency — ${(options.flowWaveFrequency || 2.2).toFixed(1)}`}>
+          <input type="range" min="0.6" max="5" step="0.1" value={options.flowWaveFrequency || 2.2} onChange={(e) => update({ flowWaveFrequency: Number(e.target.value) })} className="pop-range w-full" />
+        </Field>
+      </div>
+      <Field label="Arrow message">
+        <input value={options.flowMessage || ''} onChange={(e) => update({ flowMessage: e.target.value })} placeholder="Keep going →" className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2.5 text-sm text-white placeholder:text-white/30" />
+      </Field>
+      <ToggleRow label="Animated arrow effect" on={options.flowArrows !== false} onClick={() => update({ flowArrows: options.flowArrows === false })} />
+    </section>
   );
 }
 

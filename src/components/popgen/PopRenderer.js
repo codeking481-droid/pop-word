@@ -34,6 +34,7 @@ export default class PopRenderer {
     this._lastIdx = -1;
     this._wordsKey = null;
     this._wordsCache = [];
+    this.flowParticles = this._initStars(90);
 
     this._applyAspect(options.aspect || '9:16');
     this.stars = this._initStars(200);
@@ -88,6 +89,12 @@ export default class PopRenderer {
   }
 
   getDuration() {
+    const template = this.options.template || this.options.mode;
+    if (template === 'minimal') return Math.max(4, (this.options.minimalCards || []).length * 0.8 + 2);
+    if (template === 'flow') {
+      const sentence = (this.options.flowSentence || this.options.script || '').trim();
+      return Math.max(4, sentence.length * 0.075 + 2);
+    }
     const dur = this.options.wordDuration || 0.4;
     let d = this.getWords().length * dur;
     if (this.options.ctaEnabled && this.options.ctaText) d += 2;
@@ -171,19 +178,220 @@ export default class PopRenderer {
   _draw(t) {
     const zoom = this._zoomFactor(t);
     const { ctx, W, H } = this;
+    const template = this.options.template || this.options.mode;
     if (zoom !== 1) {
       ctx.save();
       ctx.translate(W / 2, H / 2);
       ctx.scale(zoom, zoom);
       ctx.translate(-W / 2, -H / 2);
     }
-    this._drawBackground(t);
-    if (this.options.mode === 'caption') this._renderCaptionMode(t);
-    else this._drawWord(t);
+    if (template === 'minimal') {
+      this._renderMinimal(t);
+    } else if (template === 'flow') {
+      this._renderFlow(t);
+    } else {
+      this._drawBackground(t);
+      if (this.options.mode === 'caption') this._renderCaptionMode(t);
+      else this._drawWord(t);
+    }
     if (this.options.showProgressbar) this._drawProgressBar(t);
     if (zoom !== 1) ctx.restore();
     if (this.options.brandEnabled) this._drawLogo();
     if (this.options.watermark) this._drawWatermark();
+  }
+
+  _drawMinimalBackground() {
+    const { ctx, W, H } = this;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#f2f4f7';
+    ctx.beginPath();
+    ctx.moveTo(W * 0.51, 0);
+    ctx.lineTo(W, 0);
+    ctx.lineTo(W, H);
+    ctx.lineTo(W * 0.43, H);
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(17,24,39,0.08)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(W * 0.51, 0);
+    ctx.lineTo(W * 0.43, H);
+    ctx.stroke();
+  }
+
+  _drawCardText(text, x, y, maxW, fontSize, color = '#111827') {
+    const { ctx } = this;
+    const words = String(text || '').split(/\s+/).filter(Boolean);
+    const lines = [];
+    let line = '';
+    ctx.font = `700 ${fontSize}px ui-sans-serif, system-ui, sans-serif`;
+    for (const word of words) {
+      const candidate = line ? `${line} ${word}` : word;
+      if (ctx.measureText(candidate).width > maxW && line) {
+        lines.push(line);
+        line = word;
+      } else line = candidate;
+    }
+    if (line) lines.push(line);
+    ctx.fillStyle = color;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const lineH = fontSize * 1.18;
+    lines.slice(0, 5).forEach((value, index) => ctx.fillText(value, x, y + (index - (Math.min(lines.length, 5) - 1) / 2) * lineH));
+  }
+
+  _renderMinimal(t) {
+    const { ctx, W, H, options } = this;
+    this._drawMinimalBackground();
+    const cards = (options.minimalCards || []).slice(0, 12);
+    const layout = options.minimalLayout || 'scatter';
+    const style = options.minimalStyle || 'liquid';
+    const cols = layout === 'grid' ? Math.min(3, Math.max(1, Math.ceil(Math.sqrt(Math.max(cards.length, 1))))) : 1;
+    const rows = layout === 'grid' ? Math.ceil(Math.max(cards.length, 1) / cols) : 1;
+    cards.forEach((card, index) => {
+      const col = layout === 'grid' ? index % cols : 0;
+      const row = layout === 'grid' ? Math.floor(index / cols) : 0;
+      const baseX = layout === 'grid' ? W * (0.16 + (col / Math.max(cols - 1, 1)) * 0.68) : W * (0.22 + ((index * 0.37) % 0.56));
+      const baseY = layout === 'grid' ? H * (0.27 + (row / Math.max(rows - 1, 1)) * 0.48) : H * (0.2 + ((index * 0.29) % 0.6));
+      const float = layout === 'floating' ? Math.sin(t * 1.5 + index) * H * 0.018 : Math.sin(t * 1.1 + index) * H * 0.008;
+      const driftX = layout === 'scatter' ? Math.sin(t * 0.7 + index * 1.7) * W * 0.025 : 0;
+      const rotation = layout === 'grid' ? 0 : (Math.sin(index * 4.2) * 0.055 + Math.sin(t * 0.8 + index) * 0.012);
+      const cw = Math.min(W * 0.62, layout === 'grid' ? W * 0.27 : W * 0.48);
+      const ch = card.type === 'image' ? cw * 0.82 : Math.min(H * 0.2, cw * 0.58);
+      const x = Math.max(cw / 2 + 18, Math.min(W - cw / 2 - 18, baseX + driftX));
+      const y = Math.max(ch / 2 + 24, Math.min(H - ch / 2 - 24, baseY + float));
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(rotation);
+      if (style === 'liquid') {
+        ctx.shadowColor = 'rgba(15,23,42,0.18)';
+        ctx.shadowBlur = 28;
+        ctx.shadowOffsetY = 12;
+      } else {
+        ctx.shadowColor = 'rgba(15,23,42,0.22)';
+        ctx.shadowBlur = 10;
+        ctx.shadowOffsetY = 6;
+      }
+      this._roundRect(-cw / 2, -ch / 2, cw, ch, style === 'liquid' ? 30 : 18);
+      ctx.fillStyle = style === 'liquid' ? 'rgba(255,255,255,0.78)' : '#ffffff';
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      if (card.type === 'image' && card.image) {
+        const iw = card.image.videoWidth || card.image.naturalWidth || card.image.width;
+        const ih = card.image.videoHeight || card.image.naturalHeight || card.image.height;
+        if (iw && ih) {
+          const scale = Math.max(cw / iw, ch / ih);
+          const dw = iw * scale;
+          const dh = ih * scale;
+          ctx.save();
+          this._roundRect(-cw / 2 + 7, -ch / 2 + 7, cw - 14, ch - 14, style === 'liquid' ? 24 : 12);
+          ctx.clip();
+          ctx.drawImage(card.image, -dw / 2, -dh / 2, dw, dh);
+          ctx.restore();
+        }
+      } else {
+        this._drawCardText(card.text || 'Add a card', 0, 0, cw * 0.82, Math.min(42, cw * 0.12));
+      }
+      ctx.restore();
+    });
+
+    const number = options.minimalNumber ?? 12;
+    if (options.minimalShowNumber !== false) {
+      const pulse = options.minimalAnimateNumber === false ? 1 : 1 + Math.sin(t * 3) * 0.06;
+      ctx.save();
+      ctx.translate(W * 0.14, H * 0.12);
+      ctx.scale(pulse, pulse);
+      ctx.fillStyle = '#111827';
+      ctx.font = `900 ${Math.min(W, H) * 0.12}px ui-sans-serif, system-ui, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(String(number), 0, 0);
+      ctx.font = `700 ${Math.min(W, H) * 0.026}px ui-sans-serif, system-ui, sans-serif`;
+      ctx.fillStyle = 'rgba(17,24,39,0.55)';
+      ctx.fillText('IDEAS', 0, Math.min(W, H) * 0.085);
+      ctx.restore();
+    }
+    const bullets = String(options.minimalBullets || '').split(/\n/).map((item) => item.trim()).filter(Boolean).slice(0, 5);
+    if (bullets.length) {
+      ctx.save();
+      ctx.fillStyle = '#111827';
+      ctx.font = `700 ${Math.min(W, H) * 0.033}px ui-sans-serif, system-ui, sans-serif`;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      bullets.forEach((bullet, index) => {
+        const yy = H * 0.78 + index * Math.min(W, H) * 0.052;
+        ctx.fillStyle = '#00a94f';
+        ctx.beginPath(); ctx.arc(W * 0.1, yy, 7, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#111827';
+        ctx.fillText(bullet, W * 0.13, yy);
+      });
+      ctx.restore();
+    }
+  }
+
+  _renderFlow(t) {
+    const { ctx, W, H, options } = this;
+    const grad = ctx.createLinearGradient(0, 0, W, H);
+    grad.addColorStop(0, '#090b25'); grad.addColorStop(0.52, '#172554'); grad.addColorStop(1, '#111827');
+    ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
+    const height = Math.max(20, Math.min(H * 0.18, Number(options.flowWaveHeight) || H * 0.09));
+    const speed = Number(options.flowWaveSpeed) || 1;
+    const frequency = Number(options.flowWaveFrequency) || 2.2;
+    const centerY = H * 0.57;
+    const waveY = (x) => centerY + Math.sin(x / W * Math.PI * frequency + t * speed) * height;
+    for (const particle of this.flowParticles) {
+      const x = ((particle.x + t * particle.speed * 0.04) % 1) * W;
+      const y = waveY(x) + (particle.y - 0.5) * H * 0.45;
+      ctx.fillStyle = `rgba(255,255,255,${0.18 + particle.alpha * 0.42})`;
+      ctx.beginPath(); ctx.arc(x, y, particle.size * 1.7, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.save();
+    ctx.lineWidth = Math.max(5, H * 0.006);
+    ctx.strokeStyle = 'rgba(125,211,252,0.42)';
+    ctx.shadowColor = '#38bdf8'; ctx.shadowBlur = 30;
+    ctx.beginPath();
+    for (let x = 0; x <= W; x += 12) {
+      const y = waveY(x);
+      if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.stroke(); ctx.restore();
+
+    const sentence = String(options.flowSentence || options.script || 'Ride the wave').trim() || 'Ride the wave';
+    const chars = [...sentence];
+    const fontSize = Math.min(W, H) * 0.105;
+    ctx.font = `900 ${fontSize}px ui-sans-serif, system-ui, sans-serif`;
+    const widths = chars.map((char) => ctx.measureText(char).width);
+    const total = widths.reduce((sum, value) => sum + value, 0);
+    let x = (W - total) / 2;
+    chars.forEach((char, index) => {
+      const cx = x + widths[index] / 2;
+      const y = waveY(cx) - fontSize * 0.22;
+      ctx.save();
+      ctx.translate(cx, y);
+      ctx.rotate(Math.cos(cx / W * Math.PI * frequency + t * speed) * 0.12);
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = `hsl(${(index * 28 + t * 70) % 360} 95% 68%)`;
+      ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 18;
+      ctx.fillText(char, 0, 0);
+      ctx.restore();
+      x += widths[index];
+    });
+    const message = String(options.flowMessage || '').trim();
+    if (message && options.flowArrows !== false) {
+      ctx.save();
+      ctx.font = `800 ${Math.min(W, H) * 0.035}px ui-sans-serif, system-ui, sans-serif`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      const pulse = 0.75 + Math.sin(t * 4) * 0.25;
+      ctx.globalAlpha = pulse;
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(message, W / 2, H * 0.2);
+      ctx.strokeStyle = '#facc15'; ctx.fillStyle = '#facc15'; ctx.lineWidth = 8;
+      const arrowY = H * 0.26;
+      ctx.beginPath(); ctx.moveTo(W * 0.24, arrowY); ctx.lineTo(W * 0.76, arrowY); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(W * 0.76, arrowY); ctx.lineTo(W * 0.7, arrowY - 24); ctx.lineTo(W * 0.7, arrowY + 24); ctx.closePath(); ctx.fill();
+      ctx.restore();
+    }
   }
 
   _drawLogo() {

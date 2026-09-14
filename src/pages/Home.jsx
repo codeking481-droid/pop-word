@@ -34,6 +34,19 @@ export default function Home() {
     bgImage: null,
     watermark: true,
     mode: 'pop',
+    template: 'pop',
+    minimalCards: [],
+    minimalLayout: 'scatter',
+    minimalStyle: 'liquid',
+    minimalNumber: 12,
+    minimalAnimateNumber: true,
+    minimalBullets: 'Fast setup\nNo account\nExport locally',
+    flowSentence: 'Make ideas move',
+    flowWaveHeight: 170,
+    flowWaveSpeed: 1,
+    flowWaveFrequency: 2.2,
+    flowMessage: 'Keep going',
+    flowArrows: true,
     hookBoost: false,
     ctaEnabled: false,
     ctaText: 'Follow for Part 2',
@@ -192,14 +205,9 @@ export default function Home() {
               <div className="text-[11px] text-white/40">Viral Word Pop Generator</div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowPaystack(true)}
-              className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/60 transition hover:text-white"
-            >
-              <span className="h-2 w-2 rounded-full bg-white/50" />
-              Pro payments coming soon
-            </button>
+          <div className="flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-semibold text-white/50">
+            <span className="h-2 w-2 rounded-full bg-[#00FF62]" />
+            Offline mode
           </div>
         </div>
       </header>
