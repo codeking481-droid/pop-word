@@ -322,10 +322,10 @@ export default function Home() {
       </header>
 
       {/* Main */}
-      <main className="mx-auto max-w-[1500px] px-5 py-5 lg:px-8 lg:py-6">
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)] xl:gap-6">
+      <main className="mx-auto min-w-0 max-w-[1500px] overflow-x-hidden px-5 py-5 lg:px-8 lg:py-6">
+        <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)] xl:gap-6">
           {/* Control panel */}
-          <div className="order-2 rounded-3xl border border-white/10 bg-white/[0.03] backdrop-blur-xl lg:order-1">
+          <div className="order-2 min-w-0 rounded-3xl border border-white/10 bg-white/[0.03] backdrop-blur-xl lg:order-1">
             <ControlPanel
               options={options}
               setOptions={setOptions}
@@ -344,7 +344,7 @@ export default function Home() {
             />
           </div>
           {/* Preview panel */}
-          <div className="order-1 rounded-3xl border border-white/10 bg-gradient-to-b from-white/[0.05] to-transparent backdrop-blur-xl lg:order-2">
+          <div className="order-1 min-w-0 rounded-3xl border border-white/10 bg-gradient-to-b from-white/[0.05] to-transparent backdrop-blur-xl lg:order-2">
             <PreviewPanel
               options={options}
               onReady={(r) => (rendererRef.current = r)}
