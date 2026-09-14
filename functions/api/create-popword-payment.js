@@ -55,8 +55,3 @@ export async function onRequestPost({ request, env }) {
 
   return json({ authorization_url: result.data.authorization_url });
 }
-
-export async function onRequest(context) {
-  if (context.request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
-  return onRequestPost(context);
-}
