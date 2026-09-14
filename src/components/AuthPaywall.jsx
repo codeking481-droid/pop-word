@@ -45,18 +45,20 @@ export function SignupGate({ onLogin }) {
 export default function PaywallModal({ user, downloadCount, isPro, onClose, onRefresh, onPay, refreshing = false, paying = false }) {
   if (!user || isPro) return null;
   const remaining = Math.max(0, 3 - (downloadCount || 0));
+  const closeModal = (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    onClose();
+  };
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-5 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="paywall-title" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-5 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="paywall-title">
       <div onClick={(event) => event.stopPropagation()} className="relative w-full max-w-md rounded-3xl border border-white/10 bg-[#161616] p-6 shadow-2xl">
         <button
           type="button"
           aria-label="Close paywall"
-          onClickCapture={(event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            onClose();
-          }}
-          onPointerDown={(event) => event.stopPropagation()}
+          onClick={closeModal}
+          onMouseDown={closeModal}
+          onPointerUp={closeModal}
           className="absolute right-2 top-2 z-20 flex h-11 w-11 cursor-pointer items-center justify-center rounded-full bg-white/5 text-white/70 transition hover:bg-white/15 hover:text-white active:bg-white/20"
         >
           <X className="h-5 w-5" />
