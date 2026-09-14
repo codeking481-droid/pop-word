@@ -11,7 +11,7 @@ export function pickVideoMime() {
   for (const type of types) {
     if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported(type)) return type;
   }
-  return 'video/webm';
+  return null;
 }
 
 export function downloadBlob(blob, filename) {
@@ -26,46 +26,76 @@ export function downloadBlob(blob, filename) {
 }
 
 export async function recordVideo(renderer, { duration, onProgress }) {
-  if (typeof MediaRecorder === 'undefined') {
+  if (typeof MediaRecorder === 'undefined' || !renderer?.canvas?.captureStream) {
     throw new Error('Video recording is not supported by this browser');
   }
 
-  const stream = renderer.canvas.captureStream(30);
   const mimeType = pickVideoMime();
-  const recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 8_000_000 });
+  if (!mimeType) throw new Error('This browser cannot encode a supported video format');
+  const safeDuration = Number(duration);
+  if (!Number.isFinite(safeDuration) || safeDuration <= 0) throw new Error('Nothing to export');
+
+  const stream = renderer.canvas.captureStream(30);
+  let recorder;
+  try {
+    recorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: 8_000_000 });
+  } catch {
+    stream.getTracks().forEach((track) => track.stop());
+    throw new Error('This browser cannot start video recording');
+  }
   const chunks = [];
   recorder.ondataavailable = (event) => {
     if (event.data?.size) chunks.push(event.data);
   };
 
   const previousSpeed = renderer.speed;
+  const previousTime = renderer.currentTime;
+  const wasPlaying = renderer.playing;
   renderer.setSpeed(1);
   renderer.seek(0);
   renderer.play();
-  recorder.start(100);
+  try {
+    recorder.start(100);
+  } catch {
+    renderer.pause();
+    renderer.setSpeed(previousSpeed);
+    renderer.seek(previousTime);
+    if (wasPlaying) renderer.play();
+    stream.getTracks().forEach((track) => track.stop());
+    throw new Error('This browser cannot start video recording');
+  }
 
   return new Promise((resolve, reject) => {
     const start = performance.now();
-    const tick = () => {
-      const elapsed = (performance.now() - start) / 1000;
-      onProgress?.(Math.min(1, elapsed / duration));
-      if (elapsed < duration) requestAnimationFrame(tick);
-      else if (recorder.state !== 'inactive') recorder.stop();
-    };
-    requestAnimationFrame(tick);
-
+    let settled = false;
+    let frame = null;
     const cleanup = () => {
+      if (frame !== null) cancelAnimationFrame(frame);
       renderer.pause();
       renderer.setSpeed(previousSpeed);
+      renderer.seek(previousTime);
+      if (wasPlaying) renderer.play();
       stream.getTracks().forEach((track) => track.stop());
     };
+    const fail = (error) => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      reject(error instanceof Error ? error : new Error('Video recording failed'));
+    };
+    const tick = () => {
+      const elapsed = (performance.now() - start) / 1000;
+      onProgress?.(Math.min(1, elapsed / safeDuration));
+      if (elapsed < safeDuration && !settled) frame = requestAnimationFrame(tick);
+      else if (recorder.state !== 'inactive') recorder.stop();
+    };
+    frame = requestAnimationFrame(tick);
     recorder.onstop = () => {
+      if (settled) return;
+      settled = true;
       cleanup();
       resolve(new Blob(chunks, { type: mimeType.split(';')[0] }));
     };
-    recorder.onerror = (event) => {
-      cleanup();
-      reject(event.error || new Error('Video recording failed'));
-    };
+    recorder.onerror = (event) => fail(event.error || new Error('Video recording failed'));
   });
 }

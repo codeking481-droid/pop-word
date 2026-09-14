@@ -377,7 +377,7 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
   );
 }
 
-function Label({ children, icon }) {
+function Label({ children, icon = null }) {
   return (
     <div className="mb-2.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-white/50">
       {icon}
@@ -405,13 +405,17 @@ function MinimalControls({ options, update }) {
     const additions = next.map((file) => {
       const url = URL.createObjectURL(file);
       const isVideo = file.type.startsWith('video/');
-      const image = isVideo ? document.createElement('video') : new Image();
-      image.src = url;
+      let image;
       if (isVideo) {
+        image = document.createElement('video');
         image.muted = true;
         image.loop = true;
         image.playsInline = true;
+        image.src = url;
         image.load();
+      } else {
+        image = new Image();
+        image.src = url;
       }
       return { id: `image-${Date.now()}-${Math.random()}`, type: 'image', image, url, text: file.name };
     });

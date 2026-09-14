@@ -19,26 +19,29 @@ export default function PreviewPanel({ options, onReady, onExportVideo, exportin
   const [playing, setPlaying] = useState(true);
   const [speed, setSpeed] = useState(1);
   const [duration, setDuration] = useState(0);
-  const prevTRef = useRef(0);
+  const durationRef = useRef(0);
 
   useEffect(() => {
     const r = new PopRenderer(canvasRef.current, {
       ...options,
       onTimeUpdate: (t, d) => {
-        if (barRef.current) barRef.current.style.width = `${d ? (t / d) * 100 : 0}%`;
+        if (barRef.current) barRef.current.style.width = `${d ? Math.min(100, Math.max(0, (t / d) * 100)) : 0}%`;
         if (timeRef.current) timeRef.current.textContent = `${fmt(t)} / ${fmt(d)}`;
-        if (d !== duration) setDuration(d);
-        if (prevTRef.current && t < prevTRef.current - 0.5) {
+        if (d !== durationRef.current) {
+          durationRef.current = d;
+          setDuration(d);
         }
-        prevTRef.current = t;
       },
     });
     rendererRef.current = r;
     onReady && onReady(r);
     r.play();
-    return () => r.destroy();
+    return () => {
+      r.destroy();
+      if (rendererRef.current === r) rendererRef.current = null;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, []); // renderer lifecycle is intentionally tied to the canvas
 
   useEffect(() => {
     const r = rendererRef.current;
@@ -145,7 +148,7 @@ export default function PreviewPanel({ options, onReady, onExportVideo, exportin
 
         {/* Export buttons */}
         <div className="pt-1">
-          <ExportBtn onClick={onExportVideo} disabled={!!exporting} loading={isBusy('MP4')} icon={<Download className="h-4 w-4" />} label="MP4" />
+          <ExportBtn onClick={onExportVideo} disabled={!!exporting} loading={isBusy('MP4')} icon={<Download className="h-4 w-4" />} label="Video" />
         </div>
       </div>
     </div>

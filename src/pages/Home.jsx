@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Zap } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 
@@ -8,6 +8,7 @@ import { recordVideo, downloadBlob } from '@/components/popgen/exporter';
 
 export default function Home() {
   const rendererRef = useRef(null);
+  const ownedUrlsRef = useRef(new Set());
   const [exporting, setExporting] = useState(null);
 
   const [options, setOptions] = useState({
@@ -55,16 +56,26 @@ export default function Home() {
     brandColor: '#00FF62',
     brandLogo: null,
   });
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
 
   const [batchScripts, setBatchScripts] = useState('');
   const [batchProgress, setBatchProgress] = useState(null);
   const [multiExporting, setMultiExporting] = useState(false);
 
+  useEffect(() => () => {
+    for (const url of ownedUrlsRef.current) URL.revokeObjectURL(url);
+    for (const card of optionsRef.current.minimalCards || []) {
+      if (card.url) URL.revokeObjectURL(card.url);
+    }
+    ownedUrlsRef.current.clear();
+  }, []);
+
   const ensureScript = () => {
     const r = rendererRef.current;
     if (!r) return null;
     const dur = r.getDuration();
-    if (dur <= 0) {
+    if (dur <= 0 || !r.hasContent()) {
       toast.error('Paste a script first');
       return null;
     }
@@ -75,6 +86,7 @@ export default function Home() {
     const items = files.map((file) => {
       const isVideo = file.type.startsWith('video');
       const url = URL.createObjectURL(file);
+      ownedUrlsRef.current.add(url);
       let element;
       if (isVideo) {
         element = document.createElement('video');
@@ -89,7 +101,7 @@ export default function Home() {
         element.src = url;
       }
       return {
-        id: (crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`),
+        id: globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`,
         type: isVideo ? 'video' : 'image',
         element,
         url,
@@ -107,6 +119,10 @@ export default function Home() {
     setOptions((o) => {
       const lib = (o.mediaLibrary || []).filter((m) => m.id !== id);
       const removed = (o.mediaLibrary || []).find((m) => m.id === id);
+      if (removed?.url) {
+        URL.revokeObjectURL(removed.url);
+        ownedUrlsRef.current.delete(removed.url);
+      }
       const patch = { mediaLibrary: lib };
       if (removed && o.customMedia === removed.element) {
         patch.background = 'stars';
@@ -130,9 +146,10 @@ export default function Home() {
       downloadBlob(blob, 'popup-video.' + (blob.type.includes('mp4') ? 'mp4' : 'webm'));
       toast.success('Video ready!');
     } catch (e) {
-      toast.error('Recording failed');
+      toast.error(e?.message || 'Recording failed');
+    } finally {
+      setExporting(null);
     }
-    setExporting(null);
   };
 
   const handleExportVideo = handleGenerate;
@@ -140,54 +157,69 @@ export default function Home() {
   const generateBatch = async () => {
     const scripts = batchScripts.split(/^---\s*$|\n---\s*$|\n---\n/m).map((s) => s.trim()).filter(Boolean);
     if (!scripts.length) { toast.error('Add at least one script'); return; }
+    const renderer = rendererRef.current;
+    if (!renderer) { toast.error('Preview is still loading'); return; }
     setBatchProgress({ current: 0, total: scripts.length });
-    for (let i = 0; i < scripts.length; i++) {
-      setBatchProgress({ current: i, total: scripts.length });
-      setOptions((o) => ({ ...o, script: scripts[i] }));
-      await new Promise((r) => setTimeout(r, 150));
-      const r = rendererRef.current;
-      const dur = r.getDuration();
-      if (dur <= 0) continue;
-      try {
-        const blob = await recordVideo(r, {
-          duration: dur,
-          onProgress: () => {},
-        });
-        downloadBlob(blob, `popword-${i + 1}.${blob.type.includes('mp4') ? 'mp4' : 'webm'}`);
-      } catch (e) {
-        toast.error(`Video ${i + 1} failed`);
+    setExporting({ type: 'BATCH', progress: 0 });
+    try {
+      for (let i = 0; i < scripts.length; i++) {
+        setBatchProgress({ current: i, total: scripts.length });
+        setExporting({ type: 'BATCH', progress: i / scripts.length });
+        setOptions((o) => ({ ...o, script: scripts[i] }));
+        renderer.setOptions({ script: scripts[i] });
+        const dur = renderer.getDuration();
+        if (dur <= 0 || !renderer.hasContent()) {
+          setBatchProgress({ current: i + 1, total: scripts.length });
+          continue;
+        }
+        try {
+          const blob = await recordVideo(renderer, {
+            duration: dur,
+            onProgress: () => {},
+          });
+          downloadBlob(blob, `popword-${i + 1}.${blob.type.includes('mp4') ? 'mp4' : 'webm'}`);
+        } catch (e) {
+          toast.error(`Video ${i + 1} failed${e?.message ? `: ${e.message}` : ''}`);
+        }
+        setBatchProgress({ current: i + 1, total: scripts.length });
       }
+      toast.success(`Done — ${scripts.length} videos rendered`);
+    } finally {
+      setBatchProgress(null);
+      setExporting(null);
     }
-    setBatchProgress(null);
-    toast.success(`Done — ${scripts.length} videos rendered`);
   };
 
   const handleMultiExport = async () => {
     const ctx = ensureScript();
     if (!ctx) return;
     setMultiExporting(true);
-    const aspects = ['9:16', '1:1', '16:9'];
+    const aspects = ['9:16', '1:1', '4:5', '16:9'];
     const original = options.aspect;
     const completed = [];
+    setExporting({ type: 'ALL', progress: 0 });
     try {
       for (const a of aspects) {
         setOptions((o) => ({ ...o, aspect: a }));
-        await new Promise((res) => setTimeout(res, 180));
-        const r = rendererRef.current;
+        const r = ctx.r;
+        r.setOptions({ aspect: a });
         const dur = r.getDuration();
-        if (dur <= 0) continue;
+        if (dur <= 0 || !r.hasContent()) continue;
         try {
           const blob = await recordVideo(r, { duration: dur, onProgress: () => {} });
           downloadBlob(blob, `popword-${a.replace(':', 'x')}.${blob.type.includes('mp4') ? 'mp4' : 'webm'}`);
           completed.push(a);
         } catch (e) {
-          toast.error(`${a} export failed`);
+          toast.error(`${a} export failed${e?.message ? `: ${e.message}` : ''}`);
         }
+        setExporting({ type: 'ALL', progress: (completed.length + 1) / aspects.length });
       }
     } finally {
       setOptions((o) => ({ ...o, aspect: original }));
+      rendererRef.current?.setOptions({ aspect: original });
+      setExporting(null);
+      setMultiExporting(false);
     }
-    setMultiExporting(false);
     toast.success(`Exported ${completed.length} of ${aspects.length} formats`);
   };
 

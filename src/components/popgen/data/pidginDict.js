@@ -49,7 +49,7 @@ const PHRASES = [
 const WORDS = {
   money: 'moni', work: 'wuk', job: 'wuk', eat: 'chop', food: 'chop',
   fine: 'correct', good: 'correct', bad: 'yeye', fake: 'yeye',
-  friend: 'padi', friends: 'padi', woman: 'sisi', girl: 'sisi', boy: 'boi',
+  friend: 'padi', friends: 'padi', girl: 'sisi', boy: 'boi',
   now: 'now now', today: 'today', tomorrow: 'tomorrow', yesterday: 'yesterday',
   very: 'well well', really: 'truly', big: 'big well', small: 'small small',
   fast: 'sharp sharp', quick: 'sharp sharp', slowly: 'small small',

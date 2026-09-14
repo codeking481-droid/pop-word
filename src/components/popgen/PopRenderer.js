@@ -29,11 +29,15 @@ export default class PopRenderer {
     this.startTime = 0;
     this.pausedAt = 0;
     this.customMedia = null;
+    this._mediaLoadHandler = null;
     this.bgImage = null;
     this.brandLogoImg = null;
     this._lastIdx = -1;
     this._wordsKey = null;
     this._wordsCache = [];
+    this._flowLayoutKey = null;
+    this._flowLayout = null;
+    this._watchedImages = new WeakSet();
     this.flowParticles = this._initStars(90);
 
     this._applyAspect(options.aspect || '9:16');
@@ -63,18 +67,52 @@ export default class PopRenderer {
   }
 
   setOptions(opts) {
+    const previous = this.options;
     const aspectChanged = opts.aspect && opts.aspect !== this.aspect;
+    const contentChanged = opts.script !== previous.script
+      || opts.uppercase !== previous.uppercase
+      || opts.template !== previous.template
+      || opts.mode !== previous.mode
+      || opts.flowSentence !== previous.flowSentence
+      || opts.minimalCards !== previous.minimalCards;
     this.options = { ...this.options, ...opts };
     if (opts.onTimeUpdate) this.onTimeUpdate = opts.onTimeUpdate;
+    if (contentChanged) {
+      this._wordsKey = null;
+      this._wordsCache = [];
+      this._lastIdx = -1;
+    }
+    if (opts.flowSentence !== previous.flowSentence || aspectChanged) {
+      this._flowLayoutKey = null;
+      this._flowLayout = null;
+    }
     if (aspectChanged) {
-      this._applyAspect(opts.aspect);
-      if (!this.playing) this._draw(this.currentTime);
+      this._applyAspect(ASPECTS[opts.aspect] ? opts.aspect : '9:16');
+    }
+    if (!this.playing) {
+      this._draw(this.pausedAt);
+      if (this.onTimeUpdate) this.onTimeUpdate(this.currentTime, this.getDuration());
     }
   }
 
   setCustomMedia(media) {
+    if (media !== this.customMedia && this.customMedia?.tagName === 'VIDEO') {
+      this.customMedia.pause();
+    }
+    if (this.customMedia && this._mediaLoadHandler) {
+      this.customMedia.removeEventListener('loadeddata', this._mediaLoadHandler);
+      this.customMedia.removeEventListener('load', this._mediaLoadHandler);
+    }
     this.customMedia = media;
-    if (!this.playing) this._draw(this.currentTime);
+    if (media && typeof media.addEventListener === 'function') {
+      this._mediaLoadHandler = () => { if (!this.playing) this._draw(this.currentTime); };
+      media.addEventListener('loadeddata', this._mediaLoadHandler, { once: true });
+      media.addEventListener('load', this._mediaLoadHandler, { once: true });
+    }
+    if (!this.playing) {
+      this._draw(this.currentTime);
+      if (this.onTimeUpdate) this.onTimeUpdate(this.currentTime, this.getDuration());
+    }
   }
 
   getWords() {
@@ -90,15 +128,22 @@ export default class PopRenderer {
 
   getDuration() {
     const template = this.options.template || this.options.mode;
-    if (template === 'minimal') return Math.max(4, (this.options.minimalCards || []).length * 0.8 + 2);
+    if (template === 'minimal') return Math.max(4, Math.min(60, (this.options.minimalCards || []).length * 0.8 + 2));
     if (template === 'flow') {
       const sentence = (this.options.flowSentence || this.options.script || '').trim();
-      return Math.max(4, sentence.length * 0.075 + 2);
+      return Math.max(4, Math.min(60, sentence.length * 0.075 + 2));
     }
-    const dur = this.options.wordDuration || 0.4;
+    const dur = Number.isFinite(Number(this.options.wordDuration)) ? Math.max(0.05, Number(this.options.wordDuration)) : 0.4;
     let d = this.getWords().length * dur;
     if (this.options.ctaEnabled && this.options.ctaText) d += 2;
-    return d;
+    return Math.min(600, d);
+  }
+
+  hasContent() {
+    const template = this.options.template || this.options.mode;
+    if (template === 'minimal') return (this.options.minimalCards || []).length > 0;
+    if (template === 'flow') return Boolean(String(this.options.flowSentence || this.options.script || '').trim());
+    return this.getWords().length > 0;
   }
 
   get currentTime() {
@@ -115,9 +160,11 @@ export default class PopRenderer {
 
   pause() {
     if (!this.playing) return;
+    const current = this.currentTime;
     this.playing = false;
     cancelAnimationFrame(this.raf);
-    this.pausedAt = this.currentTime;
+    this.raf = null;
+    this.pausedAt = current;
     if (this.customMedia && this.customMedia.tagName === 'VIDEO') this.customMedia.pause();
   }
 
@@ -125,11 +172,12 @@ export default class PopRenderer {
 
   seek(t) {
     const dur = this.getDuration();
-    if (dur > 0 && t >= dur) t = 0;
-    this.pausedAt = t;
-    if (this.playing) this.startTime = performance.now() - (t * 1000) / this.speed;
-    this._draw(t);
-    if (this.onTimeUpdate) this.onTimeUpdate(t, dur);
+    const next = Number.isFinite(Number(t)) ? Math.max(0, Number(t)) : 0;
+    const position = dur > 0 && next >= dur ? 0 : next;
+    this.pausedAt = position;
+    if (this.playing) this.startTime = performance.now() - (position * 1000) / this.speed;
+    this._draw(position);
+    if (this.onTimeUpdate) this.onTimeUpdate(position, dur);
   }
 
   setSpeed(s) {
@@ -140,7 +188,19 @@ export default class PopRenderer {
 
   renderFrameAt(t) { this._draw(t); }
 
-  destroy() { cancelAnimationFrame(this.raf); }
+  destroy() {
+    this.pause();
+    this.raf = null;
+    this.onTimeUpdate = null;
+    if (this.customMedia && this._mediaLoadHandler) {
+      this.customMedia.removeEventListener('loadeddata', this._mediaLoadHandler);
+      this.customMedia.removeEventListener('load', this._mediaLoadHandler);
+    }
+    this.customMedia = null;
+    this._mediaLoadHandler = null;
+    this.bgImage = null;
+    this.brandLogoImg = null;
+  }
 
   _isKey(word) {
     const w = (word || '').toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -179,6 +239,10 @@ export default class PopRenderer {
     const zoom = this._zoomFactor(t);
     const { ctx, W, H } = this;
     const template = this.options.template || this.options.mode;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.shadowBlur = 0;
     if (zoom !== 1) {
       ctx.save();
       ctx.translate(W / 2, H / 2);
@@ -278,6 +342,11 @@ export default class PopRenderer {
       ctx.fill();
       ctx.shadowBlur = 0;
       if (card.type === 'image' && card.image) {
+        if (!card.image.complete && typeof card.image.addEventListener === 'function' && !this._watchedImages.has(card.image)) {
+          this._watchedImages.add(card.image);
+          card.image.addEventListener('loadeddata', () => { if (!this.playing) this._draw(this.currentTime); }, { once: true });
+          card.image.addEventListener('load', () => { if (!this.playing) this._draw(this.currentTime); }, { once: true });
+        }
         const iw = card.image.videoWidth || card.image.naturalWidth || card.image.width;
         const ih = card.image.videoHeight || card.image.naturalHeight || card.image.height;
         if (iw && ih) {
@@ -336,8 +405,8 @@ export default class PopRenderer {
     grad.addColorStop(0, '#090b25'); grad.addColorStop(0.52, '#172554'); grad.addColorStop(1, '#111827');
     ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
     const height = Math.max(20, Math.min(H * 0.18, Number(options.flowWaveHeight) || H * 0.09));
-    const speed = Number(options.flowWaveSpeed) || 1;
-    const frequency = Number(options.flowWaveFrequency) || 2.2;
+    const speed = Math.max(0.05, Math.min(6, Number(options.flowWaveSpeed) || 1));
+    const frequency = Math.max(0.2, Math.min(8, Number(options.flowWaveFrequency) || 2.2));
     const centerY = H * 0.57;
     const waveY = (x) => centerY + Math.sin(x / W * Math.PI * frequency + t * speed) * height;
     for (const particle of this.flowParticles) {
@@ -359,13 +428,25 @@ export default class PopRenderer {
 
     const sentence = String(options.flowSentence || options.script || 'Ride the wave').trim() || 'Ride the wave';
     const chars = [...sentence];
-    const fontSize = Math.min(W, H) * 0.105;
+    const layoutKey = `${sentence}|${W}|${H}`;
+    if (this._flowLayoutKey !== layoutKey) {
+      const requestedFontSize = Math.min(W, H) * 0.105;
+      ctx.font = `900 ${requestedFontSize}px ui-sans-serif, system-ui, sans-serif`;
+      const requestedWidths = chars.map((char) => ctx.measureText(char).width);
+      const requestedTotal = requestedWidths.reduce((sum, value) => sum + value, 0);
+      const fontSize = requestedTotal > W * 0.88
+        ? requestedFontSize * (W * 0.88 / requestedTotal)
+        : requestedFontSize;
+      ctx.font = `900 ${fontSize}px ui-sans-serif, system-ui, sans-serif`;
+      this._flowLayout = { fontSize, widths: chars.map((char) => ctx.measureText(char).width) };
+      this._flowLayoutKey = layoutKey;
+    }
+    const { fontSize, widths: fittedWidths } = this._flowLayout;
     ctx.font = `900 ${fontSize}px ui-sans-serif, system-ui, sans-serif`;
-    const widths = chars.map((char) => ctx.measureText(char).width);
-    const total = widths.reduce((sum, value) => sum + value, 0);
+    const total = fittedWidths.reduce((sum, value) => sum + value, 0);
     let x = (W - total) / 2;
     chars.forEach((char, index) => {
-      const cx = x + widths[index] / 2;
+      const cx = x + fittedWidths[index] / 2;
       const y = waveY(cx) - fontSize * 0.22;
       ctx.save();
       ctx.translate(cx, y);
@@ -375,7 +456,7 @@ export default class PopRenderer {
       ctx.shadowColor = ctx.fillStyle; ctx.shadowBlur = 18;
       ctx.fillText(char, 0, 0);
       ctx.restore();
-      x += widths[index];
+      x += fittedWidths[index];
     });
     const message = String(options.flowMessage || '').trim();
     if (message && options.flowArrows !== false) {
@@ -396,9 +477,10 @@ export default class PopRenderer {
 
   _drawLogo() {
     if (!this.options.brandLogo) return;
+    if (!this._isLocalAsset(this.options.brandLogo)) return;
     if (!this.brandLogoImg || this.brandLogoImg.src !== this.options.brandLogo) {
       const img = new Image();
-      img.crossOrigin = 'anonymous';
+      img.onload = () => { if (!this.playing) this._draw(this.currentTime); };
       img.src = this.options.brandLogo;
       this.brandLogoImg = img;
     }
@@ -458,11 +540,13 @@ export default class PopRenderer {
       return;
     }
     if (type === 'image') {
-      if (!this.bgImage || this.bgImage.src !== (options.bgImage || '')) {
-        const img = new Image(); img.crossOrigin = 'anonymous'; img.src = options.bgImage || '';
+      if (this._isLocalAsset(options.bgImage) && (!this.bgImage || this.bgImage.src !== options.bgImage)) {
+        const img = new Image();
+        img.onload = () => { if (!this.playing) this._draw(this.currentTime); };
+        img.src = options.bgImage;
         this.bgImage = img;
       }
-      if (this.bgImage && this.bgImage.complete && this.bgImage.naturalWidth) this._drawMediaCover(this.bgImage);
+      if (this._isLocalAsset(options.bgImage) && this.bgImage?.complete && this.bgImage.naturalWidth) this._drawMediaCover(this.bgImage);
       else { ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H); }
       ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(0, 0, W, H);
       return;
@@ -497,9 +581,8 @@ export default class PopRenderer {
   _drawStars(t, alphaMul) {
     const { ctx, W, H } = this;
     for (const s of this.stars) {
-      s.y -= s.speed * 0.01;
-      if (s.y < -0.02) s.y = 1.02;
-      const x = s.x * W; const y = s.y * H;
+      const yPosition = (s.y - t * s.speed * 0.01) % 1;
+      const x = s.x * W; const y = (yPosition < 0 ? yPosition + 1 : yPosition) * H;
       const twinkle = 0.55 + Math.sin(t * 2 + s.phase) * 0.45;
       ctx.fillStyle = `rgba(255,255,255,${s.alpha * twinkle * alphaMul})`;
       ctx.beginPath(); ctx.arc(x, y, s.size, 0, Math.PI * 2); ctx.fill();
@@ -514,6 +597,10 @@ export default class PopRenderer {
     const scale = Math.max(W / mw, H / mh);
     const dw = mw * scale; const dh = mh * scale;
     ctx.drawImage(media, (W - dw) / 2, (H - dh) / 2, dw, dh);
+  }
+
+  _isLocalAsset(src) {
+    return typeof src === 'string' && (src.startsWith('blob:') || src.startsWith('data:'));
   }
 
   _drawWord(t) {
@@ -697,9 +784,9 @@ export default class PopRenderer {
     ctx.scale(tr.scale, tr.scale);
     ctx.rotate(tr.rot);
     ctx.globalAlpha = tr.alpha;
-    this._drawEmoji(word, fontSize, null);
     this._roundRect(-bw / 2, -bh / 2, bw, bh, radius);
     ctx.fillStyle = bg; ctx.fill();
+    this._drawEmoji(word, fontSize, null);
     ctx.fillStyle = textColor; ctx.shadowBlur = 0;
     ctx.fillText(word, 0, 0);
     ctx.restore();
