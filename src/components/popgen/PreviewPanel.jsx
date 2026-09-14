@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Play, Pause, Download, Film, Clipboard, Loader2 } from 'lucide-react';
+import { Play, Pause, Download, Loader2 } from 'lucide-react';
 import PopRenderer from './PopRenderer';
-import { popSound, cashSound, whooshSound, negSound } from './soundEngine';
 
 const SPEEDS = [1, 1.5, 2];
 
@@ -12,7 +11,7 @@ function fmt(s) {
   return `${m}:${sec.toString().padStart(2, '0')}`;
 }
 
-export default function PreviewPanel({ options, voiceover, music, onReady, onExportVideo, onExportGif, onCopy, exporting }) {
+export default function PreviewPanel({ options, onReady, onExportVideo, exporting }) {
   const canvasRef = useRef(null);
   const rendererRef = useRef(null);
   const barRef = useRef(null);
@@ -20,8 +19,6 @@ export default function PreviewPanel({ options, voiceover, music, onReady, onExp
   const [playing, setPlaying] = useState(true);
   const [speed, setSpeed] = useState(1);
   const [duration, setDuration] = useState(0);
-  const audioRef = useRef(null);
-  const musicRef = useRef(null);
   const prevTRef = useRef(0);
 
   useEffect(() => {
@@ -32,8 +29,6 @@ export default function PreviewPanel({ options, voiceover, music, onReady, onExp
         if (timeRef.current) timeRef.current.textContent = `${fmt(t)} / ${fmt(d)}`;
         if (d !== duration) setDuration(d);
         if (prevTRef.current && t < prevTRef.current - 0.5) {
-          if (audioRef.current) audioRef.current.currentTime = 0;
-          if (musicRef.current) musicRef.current.currentTime = 0;
         }
         prevTRef.current = t;
       },
@@ -54,82 +49,11 @@ export default function PreviewPanel({ options, voiceover, music, onReady, onExp
     rendererRef.current?.setCustomMedia(options.customMedia || null);
   }, [options.customMedia]);
 
-  useEffect(() => {
-    if (voiceover?.url) {
-      if (!audioRef.current) audioRef.current = new Audio();
-      audioRef.current.src = voiceover.url;
-      audioRef.current.load();
-    }
-  }, [voiceover?.url]);
-
-  useEffect(() => {
-    const a = audioRef.current;
-    const r = rendererRef.current;
-    if (!a) return;
-    if (voiceover?.enabled && playing && r?.playing) {
-      a.currentTime = r.currentTime;
-      a.play().catch(() => {});
-    } else {
-      a.pause();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [voiceover?.enabled, playing]);
-
-  useEffect(() => {
-    if (music?.url) {
-      if (!musicRef.current) musicRef.current = new Audio();
-      musicRef.current.src = music.url;
-      musicRef.current.loop = true;
-      musicRef.current.load();
-    } else if (musicRef.current) {
-      musicRef.current.pause();
-    }
-  }, [music?.url]);
-
-  useEffect(() => {
-    const m = musicRef.current;
-    const r = rendererRef.current;
-    if (!m) return;
-    const duck = music?.ducking && voiceover?.enabled && playing && r?.playing;
-    m.volume = duck ? (music.volume ?? 0.6) * 0.2 : (music.volume ?? 0.6);
-    if (music?.enabled && playing && r?.playing) {
-      m.currentTime = r.currentTime;
-      m.play().catch(() => {});
-    } else {
-      m.pause();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [music?.enabled, music?.volume, music?.ducking, voiceover?.enabled, playing]);
-
-  useEffect(() => {
-    const r = rendererRef.current;
-    if (!r) return;
-    r.setOptions({
-      onPop: (word, info) => {
-        if (!options.soundOn || exporting) return;
-        const v = options.soundVolume ?? 0.5;
-        if (info?.hook) whooshSound(v);
-        else if (info?.money) cashSound(v);
-        else if (info?.negative) negSound(v);
-        else popSound(v);
-      },
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [options.soundOn, options.soundVolume, exporting]);
-
   const togglePlay = () => {
     const r = rendererRef.current;
     if (!r) return;
     r.toggle();
     setPlaying(r.playing);
-    const a = audioRef.current;
-    if (a && voiceover?.enabled) {
-      if (r.playing) { a.currentTime = r.currentTime; a.play().catch(() => {}); } else a.pause();
-    }
-    const m = musicRef.current;
-    if (m && music?.enabled) {
-      if (r.playing) { m.currentTime = r.currentTime; m.play().catch(() => {}); } else m.pause();
-    }
   };
 
   const changeSpeed = (s) => {
@@ -144,8 +68,6 @@ export default function PreviewPanel({ options, voiceover, music, onReady, onExp
     const frac = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
     const t = frac * duration;
     r.seek(t);
-    if (audioRef.current) audioRef.current.currentTime = t;
-    if (musicRef.current) musicRef.current.currentTime = t;
   };
 
   const busyType = exporting?.type;
@@ -222,10 +144,8 @@ export default function PreviewPanel({ options, voiceover, music, onReady, onExp
         </div>
 
         {/* Export buttons */}
-        <div className="grid grid-cols-3 gap-2.5 pt-1">
+        <div className="pt-1">
           <ExportBtn onClick={onExportVideo} disabled={!!exporting} loading={isBusy('MP4')} icon={<Download className="h-4 w-4" />} label="MP4" />
-          <ExportBtn onClick={onExportGif} disabled={!!exporting} loading={isBusy('GIF')} icon={<Film className="h-4 w-4" />} label="GIF" />
-          <ExportBtn onClick={onCopy} disabled={!!exporting} loading={isBusy('Copy')} icon={<Clipboard className="h-4 w-4" />} label="Copy" />
         </div>
       </div>
     </div>

@@ -4,11 +4,9 @@ import toast, { Toaster } from 'react-hot-toast';
 
 import ControlPanel from '@/components/popgen/ControlPanel';
 import PreviewPanel from '@/components/popgen/PreviewPanel';
-import { recordVideo, exportGif, copyVideoToClipboard, downloadBlob } from '@/components/popgen/exporter';
-import { translateToPidgin } from '@/components/popgen/data/pidginDict';
+import { recordVideo, downloadBlob } from '@/components/popgen/exporter';
 import { generateTitlesAndHashtags } from '@/components/popgen/data/titleHashtag';
 import ViralScore from '@/components/popgen/ViralScore';
-import PaystackModal from '@/components/popgen/PaystackModal';
 import TitleHashtags from '@/components/popgen/TitleHashtags';
 import PopRenderer from '@/components/popgen/PopRenderer';
 
@@ -32,8 +30,6 @@ export default function Home() {
     highlightColor: '#FFD700',
     emojiPop: false,
     autoZoom: false,
-    soundOn: false,
-    soundVolume: 0.5,
     popScale: 1.2,
     shadowIntensity: 1,
     bgColor: '#00C853',
@@ -52,15 +48,11 @@ export default function Home() {
   });
 
   const [aiBusy, setAiBusy] = useState(null);
-  const [voiceover, setVoiceover] = useState({ enabled: false, url: null, voice: 'river', loading: false });
-  const [exportCount, setExportCount] = useState(() => parseInt(localStorage.getItem('popword_exports') || '0', 10));
-  const [showPaystack, setShowPaystack] = useState(false);
   const [showViralScore, setShowViralScore] = useState(false);
   const [viralScore, setViralScore] = useState(0);
   const [viralTips, setViralTips] = useState([]);
   const [batchScripts, setBatchScripts] = useState('');
   const [batchProgress, setBatchProgress] = useState(null);
-  const [music, setMusic] = useState({ url: null, name: '', enabled: false, volume: 0.6, ducking: true });
   const [multiExporting, setMultiExporting] = useState(false);
   const [showTitles, setShowTitles] = useState(false);
   const [titleData, setTitleData] = useState({ titles: [], hashtags: [] });
@@ -148,32 +140,6 @@ export default function Home() {
     toast.success(`${prompts[type].split(' ')[0]} transform applied offline`);
   };
 
-  const generateVoiceover = async () => {
-    const words = options.script.trim().match(/\S+/g) || [];
-    if (!words.length) {
-      toast.error('Paste a script first');
-      return;
-    }
-    setVoiceover((v) => ({ ...v, loading: false }));
-    toast.error('Voiceover requires an audio file in offline mode');
-  };
-
-  const pidginTranslate = () => {
-    if (!options.script.trim()) { toast.error('Paste a script first'); return; }
-    setOptions((o) => ({ ...o, script: translateToPidgin(o.script) }));
-    toast.success('Translated to Pidgin 🇳🇬');
-  };
-
-  const FREE_LIMIT = 3;
-  const canExport = () => {
-    return true;
-  };
-  const bumpExportCount = () => {
-    const n = exportCount + 1;
-    setExportCount(n);
-    localStorage.setItem('popword_exports', String(n));
-  };
-
   const computeViralScore = () => {
     let score = 40;
     const tips = [];
@@ -197,16 +163,13 @@ export default function Home() {
   const handleGenerate = async () => {
     const ctx = ensureScript();
     if (!ctx) return;
-    if (!canExport()) return;
     setExporting({ type: 'MP4', progress: 0 });
     try {
       const blob = await recordVideo(ctx.r, {
         duration: ctx.dur,
-        ...audioOpts(),
         onProgress: (p) => setExporting({ type: 'MP4', progress: p }),
       });
       downloadBlob(blob, 'popup-video.' + (blob.type.includes('mp4') ? 'mp4' : 'webm'));
-      bumpExportCount();
       toast.success('Video ready!');
       const vs = computeViralScore();
       setViralScore(vs.score); setViralTips(vs.tips); setShowViralScore(true);
@@ -217,44 +180,6 @@ export default function Home() {
   };
 
   const handleExportVideo = handleGenerate;
-
-  const handleExportGif = async () => {
-    const ctx = ensureScript();
-    if (!ctx) return;
-    if (!canExport()) return;
-    setExporting({ type: 'GIF', progress: 0 });
-    try {
-      const blob = await exportGif(ctx.r, {
-        duration: ctx.dur,
-        onProgress: (p) => setExporting({ type: 'GIF', progress: p }),
-      });
-      downloadBlob(blob, 'popup-captions.gif');
-      bumpExportCount();
-      toast.success('GIF ready!');
-    } catch (e) {
-      toast.error('GIF export failed');
-    }
-    setExporting(null);
-  };
-
-  const handleCopy = async () => {
-    const ctx = ensureScript();
-    if (!ctx) return;
-    if (!canExport()) return;
-    setExporting({ type: 'Copy', progress: 0 });
-    try {
-      const copied = await copyVideoToClipboard(ctx.r, {
-        duration: ctx.dur,
-        ...audioOpts(),
-        onProgress: (p) => setExporting({ type: 'Copy', progress: p }),
-      });
-      bumpExportCount();
-      toast.success(copied ? 'Copied to clipboard!' : 'Saved (clipboard unsupported)');
-    } catch (e) {
-      toast.error('Copy failed');
-    }
-    setExporting(null);
-  };
 
   const generateBatch = async () => {
     const scripts = batchScripts.split(/^---\s*$|\n---\s*$|\n---\n/m).map((s) => s.trim()).filter(Boolean);
@@ -270,11 +195,9 @@ export default function Home() {
       try {
         const blob = await recordVideo(r, {
           duration: dur,
-          ...audioOpts(),
           onProgress: () => {},
         });
         downloadBlob(blob, `popword-${i + 1}.${blob.type.includes('mp4') ? 'mp4' : 'webm'}`);
-        bumpExportCount();
       } catch (e) {
         toast.error(`Video ${i + 1} failed`);
       }
@@ -282,13 +205,6 @@ export default function Home() {
     setBatchProgress(null);
     toast.success(`Done — ${scripts.length} videos rendered`);
   };
-
-  const audioOpts = () => ({
-    audioUrl: voiceover.enabled ? voiceover.url : null,
-    musicUrl: music.enabled ? music.url : null,
-    musicVolume: music.volume ?? 0.6,
-    duck: music.ducking,
-  });
 
   const generateThumbnail = async () => {
     const r = rendererRef.current;
@@ -319,7 +235,6 @@ export default function Home() {
   const handleMultiExport = async () => {
     const ctx = ensureScript();
     if (!ctx) return;
-    if (!canExport()) return;
     setMultiExporting(true);
     const aspects = ['9:16', '1:1', '16:9'];
     const original = options.aspect;
@@ -332,7 +247,7 @@ export default function Home() {
         const dur = r.getDuration();
         if (dur <= 0) continue;
         try {
-          const blob = await recordVideo(r, { duration: dur, ...audioOpts(), onProgress: () => {} });
+          const blob = await recordVideo(r, { duration: dur, onProgress: () => {} });
           downloadBlob(blob, `popword-${a.replace(':', 'x')}.${blob.type.includes('mp4') ? 'mp4' : 'webm'}`);
           completed.push(a);
         } catch (e) {
@@ -342,7 +257,6 @@ export default function Home() {
     } finally {
       setOptions((o) => ({ ...o, aspect: original }));
     }
-    bumpExportCount();
     setMultiExporting(false);
     toast.success(`Exported ${completed.length} of ${aspects.length} formats`);
   };
@@ -388,17 +302,11 @@ export default function Home() {
               onRemoveMedia={removeMedia}
               onAITransform={aiTransform}
               aiBusy={aiBusy}
-              voiceover={voiceover}
-              setVoiceover={setVoiceover}
-              onGenerateVoiceover={generateVoiceover}
               onApplyPreset={applyPreset}
-              onPidgin={pidginTranslate}
               batchScripts={batchScripts}
               setBatchScripts={setBatchScripts}
               onGenerateBatch={generateBatch}
               batchProgress={batchProgress}
-              music={music}
-              setMusic={setMusic}
               onGenerateThumbnail={generateThumbnail}
               onGenerateTitles={generateTitles}
               onMultiExport={handleMultiExport}
@@ -409,12 +317,8 @@ export default function Home() {
           <div className="order-1 rounded-3xl border border-white/10 bg-gradient-to-b from-white/[0.05] to-transparent backdrop-blur-xl lg:order-2">
             <PreviewPanel
               options={options}
-              voiceover={voiceover}
-              music={music}
               onReady={(r) => (rendererRef.current = r)}
               onExportVideo={handleExportVideo}
-              onExportGif={handleExportGif}
-              onCopy={handleCopy}
               exporting={exporting}
             />
           </div>
@@ -426,12 +330,6 @@ export default function Home() {
       )}
       {showViralScore && (
         <ViralScore score={viralScore} tips={viralTips} onClose={() => setShowViralScore(false)} />
-      )}
-      {showPaystack && (
-        <PaystackModal
-          used={Math.min(FREE_LIMIT, exportCount)}
-          onClose={() => setShowPaystack(false)}
-        />
       )}
       <Toaster
         position="bottom-center"

@@ -1,13 +1,11 @@
 import React, { useRef, useState } from 'react';
 import { Sparkles, Upload, Wand2, Film, X, Image as ImageIcon, Plus } from 'lucide-react';
 import AIScriptTools from './AIScriptTools';
-import VoiceoverPanel from './VoiceoverPanel';
 import PresetTemplates from './PresetTemplates';
 import BatchPanel from './BatchPanel';
 import BackgroundSection from './BackgroundSection';
 import NamedTemplates from './NamedTemplates';
 import BrandKit from './BrandKit';
-import MusicPanel from './MusicPanel';
 
 const FONTS = ['Bold', 'Extra Bold', 'Anton'];
 const ANIMATIONS = [
@@ -44,7 +42,7 @@ function MediaThumb({ item }) {
   return <img src={item.url} alt="" className="h-full w-full object-cover" />;
 }
 
-export default function ControlPanel({ options, setOptions, onGenerate, exporting, onAddMedia, onSelectMedia, onRemoveMedia, onAITransform, aiBusy, voiceover, setVoiceover, onGenerateVoiceover, onApplyPreset, onPidgin, batchScripts, setBatchScripts, onGenerateBatch, batchProgress, music, setMusic, onGenerateThumbnail, onGenerateTitles, onMultiExport, multiExporting }) {
+export default function ControlPanel({ options, setOptions, onGenerate, exporting, onAddMedia, onSelectMedia, onRemoveMedia, onAITransform, aiBusy, onApplyPreset, batchScripts, setBatchScripts, onGenerateBatch, batchProgress, onGenerateThumbnail, onGenerateTitles, onMultiExport, multiExporting }) {
   const fileRef = useRef(null);
   const [dragging, setDragging] = useState(false);
   const [tab, setTab] = useState(options.mode === 'caption' ? 'caption' : 'pop');
@@ -109,12 +107,6 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
         <div className="mt-2.5">
           <Label icon={<Wand2 className="h-4 w-4" />}>AI Script Tools</Label>
           <AIScriptTools onTransform={onAITransform} busy={aiBusy} />
-          <button
-            onClick={onPidgin}
-            className="mt-2 w-full rounded-xl border border-[#FF6B35]/40 bg-[#FF6B35]/10 px-3 py-2 text-xs font-bold text-[#FFB088] transition hover:bg-[#FF6B35]/20"
-          >
-            🇳🇬 Translate to Pidgin (Naija)
-          </button>
         </div>
       </section>
 
@@ -323,12 +315,6 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
           )}
           <ToggleRow label="Emoji Pop 🔥" on={options.emojiPop} onClick={() => update({ emojiPop: !options.emojiPop })} />
           <ToggleRow label="Auto zoom on key words" on={options.autoZoom} onClick={() => update({ autoZoom: !options.autoZoom })} />
-          <ToggleRow label="Pop sound effects" on={options.soundOn} onClick={() => update({ soundOn: !options.soundOn })} />
-          {options.soundOn && (
-            <Field label={`Volume — ${Math.round((options.soundVolume ?? 0.5) * 100)}%`}>
-              <input type="range" min={0} max={1} step={0.05} value={options.soundVolume ?? 0.5} onChange={(e) => update({ soundVolume: parseFloat(e.target.value) })} className="pop-range w-full" />
-            </Field>
-          )}
         </div>
       </section>
 
@@ -351,14 +337,7 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
         </div>
       </section>
 
-      {/* AI Voiceover */}
-      <section>
-        <Label icon={<Sparkles className="h-4 w-4" />}>AI Voiceover</Label>
-        <VoiceoverPanel voiceover={voiceover} setVoiceover={setVoiceover} onGenerate={onGenerateVoiceover} />
-      </section>
-
       <BrandKit options={options} update={update} />
-      <MusicPanel music={music} setMusic={setMusic} />
 
       {/* Wealth tools */}
       <section>

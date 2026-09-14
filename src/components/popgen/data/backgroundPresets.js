@@ -24,25 +24,4 @@ export const GRADIENTS = [
   ['#1F1C2C', '#928DAB'],
 ];
 
-export const IMAGES = [
-  'https://picsum.photos/seed/pop1/1080/1920',
-  'https://picsum.photos/seed/pop2/1080/1920',
-  'https://picsum.photos/seed/pop3/1080/1920',
-  'https://picsum.photos/seed/pop4/1080/1920',
-  'https://picsum.photos/seed/pop5/1080/1920',
-  'https://picsum.photos/seed/pop6/1080/1920',
-  'https://picsum.photos/seed/pop7/1080/1920',
-  'https://picsum.photos/seed/pop8/1080/1920',
-  'https://picsum.photos/seed/pop9/1080/1920',
-  'https://picsum.photos/seed/pop10/1080/1920',
-  'https://picsum.photos/seed/pop11/1080/1920',
-  'https://picsum.photos/seed/pop12/1080/1920',
-  'https://picsum.photos/seed/pop13/1080/1920',
-  'https://picsum.photos/seed/pop14/1080/1920',
-  'https://picsum.photos/seed/pop15/1080/1920',
-  'https://picsum.photos/seed/pop16/1080/1920',
-  'https://picsum.photos/seed/pop17/1080/1920',
-  'https://picsum.photos/seed/pop18/1080/1920',
-  'https://picsum.photos/seed/pop19/1080/1920',
-  'https://picsum.photos/seed/pop20/1080/1920',
-];
+export const IMAGES = [];
