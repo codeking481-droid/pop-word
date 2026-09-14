@@ -17,6 +17,7 @@ export default function Home() {
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState('');
   const [subscription, setSubscription] = useState(null);
+  const [signupDismissed, setSignupDismissed] = useState(false);
   const [upgradeLoading, setUpgradeLoading] = useState(false);
 
   const loadSubscription = async (userId, email) => {
@@ -105,7 +106,10 @@ export default function Home() {
       setAuthReady(true);
       setAuthLoading(false);
       if (session?.user) loadSubscription(session.user.id, session.user.email);
-      else setSubscription(null);
+      else {
+        setSubscription(null);
+        setSignupDismissed(false);
+      }
     });
     const refreshOnReturn = () => {
       if (document.visibilityState === 'visible' && user) loadSubscription(user.id, user.email);
@@ -403,7 +407,14 @@ export default function Home() {
           success: { iconTheme: { primary: '#00FF62', secondary: '#0A0A0A' } },
         }}
       />
-      {isSupabaseConfigured && authReady && !user && <SignupGate onLogin={signIn} loading={authLoading} error={authError} />}
+      {isSupabaseConfigured && authReady && !user && !signupDismissed && (
+        <SignupGate
+          onLogin={signIn}
+          onClose={() => setSignupDismissed(true)}
+          loading={authLoading}
+          error={authError}
+        />
+      )}
     </div>
   );
 }
