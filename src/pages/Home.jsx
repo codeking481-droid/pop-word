@@ -18,6 +18,19 @@ export default function Home() {
   const [authError, setAuthError] = useState('');
   const [subscription, setSubscription] = useState(null);
 
+  const loadSubscription = async (userId) => {
+    const { data, error } = await supabase.from('subscriptions')
+      .select('download_count, pro_expiry')
+      .eq('user_id', userId)
+      .maybeSingle();
+    if (error) {
+      setAuthError(`Account status unavailable: ${error.message}`);
+      setSubscription({ download_count: 0 });
+      return;
+    }
+    setSubscription(data || { download_count: 0 });
+  };
+
   const [options, setOptions] = useState({
     script: '',
     background: 'stars',
@@ -78,21 +91,14 @@ export default function Home() {
       if (error) setAuthError(error.message);
       setUser(session?.user || null);
       setAuthReady(true);
-      if (session?.user) {
-        supabase.from('subscriptions').select('download_count, pro_expiry').eq('user_id', session.user.id).maybeSingle()
-          .then(({ data }) => setSubscription(data || { download_count: 0 }));
-      }
+      if (session?.user) loadSubscription(session.user.id);
     });
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user || null);
       setAuthReady(true);
       setAuthLoading(false);
-      if (session?.user) {
-        supabase.from('subscriptions').select('download_count, pro_expiry').eq('user_id', session.user.id).maybeSingle()
-          .then(({ data }) => setSubscription(data || { download_count: 0 }));
-      } else {
-        setSubscription(null);
-      }
+      if (session?.user) loadSubscription(session.user.id);
+      else setSubscription(null);
     });
     return () => {
       active = false;
