@@ -24,6 +24,24 @@ export function AccountStatus({ user, isPro, onLogin, onLogout, onOpenPaywall })
   );
 }
 
+export function SignupGate({ onLogin }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-5 backdrop-blur-md" role="dialog" aria-modal="true" aria-labelledby="signup-gate-title">
+      <div className="w-full max-w-md rounded-3xl border border-white/10 bg-[#161616] p-7 text-center shadow-2xl">
+        <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#00FF62] text-2xl font-black text-black">P</div>
+        <h2 id="signup-gate-title" className="text-2xl font-bold">Welcome to PopWord</h2>
+        <p className="mt-3 text-sm leading-relaxed text-white/60">
+          Sign up with Google to start creating animated videos. Your projects and exports stay in your browser.
+        </p>
+        <button onClick={onLogin} className="mt-6 flex w-full items-center justify-center gap-3 rounded-xl bg-[#00FF62] px-4 py-3.5 text-sm font-bold text-black transition hover:bg-[#66ff9a]">
+          <LogIn className="h-4 w-4" /> Sign up with Google
+        </button>
+        <p className="mt-4 text-[11px] text-white/35">Authentication is required to use PopWord.</p>
+      </div>
+    </div>
+  );
+}
+
 export default function PaywallModal({ user, downloadCount, isPro, onClose, onRefresh }) {
   if (!user || isPro) return null;
   const remaining = Math.max(0, 3 - (downloadCount || 0));

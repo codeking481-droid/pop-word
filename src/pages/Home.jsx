@@ -6,13 +6,14 @@ import ControlPanel from '@/components/popgen/ControlPanel';
 import PreviewPanel from '@/components/popgen/PreviewPanel';
 import { recordVideo, downloadBlob } from '@/components/popgen/exporter';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
-import PaywallModal, { AccountStatus } from '@/components/AuthPaywall';
+import PaywallModal, { AccountStatus, SignupGate } from '@/components/AuthPaywall';
 
 export default function Home() {
   const rendererRef = useRef(null);
   const ownedUrlsRef = useRef(new Set());
   const [exporting, setExporting] = useState(null);
   const [user, setUser] = useState(null);
+  const [authReady, setAuthReady] = useState(!isSupabaseConfigured);
   const [subscription, setSubscription] = useState(null);
   const [paywallOpen, setPaywallOpen] = useState(false);
 
@@ -91,10 +92,12 @@ export default function Home() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!active) return;
       setUser(session?.user || null);
+      setAuthReady(true);
       if (session?.user) loadSubscription(session.user);
     });
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user || null);
+      setAuthReady(true);
       if (session?.user) loadSubscription(session.user);
       else setSubscription(null);
     });
@@ -376,6 +379,7 @@ export default function Home() {
         onClose={() => setPaywallOpen(false)}
         onRefresh={() => { setPaywallOpen(false); loadSubscription(user); }}
       />
+      {isSupabaseConfigured && authReady && !user && <SignupGate onLogin={signIn} />}
     </div>
   );
 }
