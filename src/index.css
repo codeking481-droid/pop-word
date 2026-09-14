@@ -84,8 +84,16 @@
     @apply border-border outline-ring/50;
   }
 
+  html,
+  body,
+  #root {
+    min-height: 100%;
+    background: #0A0A0A;
+  }
+
   body {
-    @apply bg-background text-foreground font-body;
+    @apply text-foreground font-body;
+    overflow-x: hidden;
   }
 }
 
