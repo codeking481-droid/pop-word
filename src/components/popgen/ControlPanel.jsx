@@ -314,6 +314,12 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
         <div className="space-y-2.5">
           <ToggleRow label="Top progress bar" on={options.showProgressbar} onClick={() => update({ showProgressbar: !options.showProgressbar })} />
           <ToggleRow label="Show social safe zones" on={options.showSafeZones} onClick={() => update({ showSafeZones: !options.showSafeZones })} />
+          <ToggleRow label="Transparent BG (PiP for CapCut)" on={options.transparentBg} onClick={() => update({ transparentBg: !options.transparentBg })} />
+          {options.transparentBg && (
+            <p className="rounded-xl border border-[#00FF62]/20 bg-[#00FF62]/5 p-3 text-[11px] leading-relaxed text-white/60">
+              For CapCut/InShot: Import as overlay → PiP → Text will POP over your video with no background
+            </p>
+          )}
           <ToggleRow label="Auto-highlight key words" on={options.autoHighlight} onClick={() => update({ autoHighlight: !options.autoHighlight })} />
           {options.autoHighlight && (
             <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-black/40 px-3 py-2">

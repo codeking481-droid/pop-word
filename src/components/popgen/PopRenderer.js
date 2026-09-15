@@ -251,6 +251,7 @@ export default class PopRenderer {
     ctx.globalAlpha = 1;
     ctx.globalCompositeOperation = 'source-over';
     ctx.shadowBlur = 0;
+    if (this.options.transparentBg) ctx.clearRect(0, 0, W, H);
     if (zoom !== 1) {
       ctx.save();
       ctx.translate(W / 2, H / 2);
@@ -274,6 +275,7 @@ export default class PopRenderer {
 
   _drawMinimalBackground() {
     const { ctx, W, H } = this;
+    if (this.options.transparentBg) return;
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, W, H);
     ctx.fillStyle = '#f2f4f7';
@@ -409,9 +411,11 @@ export default class PopRenderer {
 
   _renderFlow(t) {
     const { ctx, W, H, options } = this;
+    if (!options.transparentBg) {
     const grad = ctx.createLinearGradient(0, 0, W, H);
     grad.addColorStop(0, '#090b25'); grad.addColorStop(0.52, '#172554'); grad.addColorStop(1, '#111827');
     ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
+    }
     const height = Math.max(20, Math.min(H * 0.18, Number(options.flowWaveHeight) || H * 0.09));
     const speed = Math.max(0.05, Math.min(6, Number(options.flowWaveSpeed) || 1));
     const frequency = Math.max(0.2, Math.min(8, Number(options.flowWaveFrequency) || 2.2));
@@ -531,6 +535,7 @@ export default class PopRenderer {
 
   _drawBackground(t) {
     const { ctx, W, H, options } = this;
+    if (options.transparentBg) return;
     const type = options.background || 'stars';
 
     if (type === 'custom' && this.customMedia) {

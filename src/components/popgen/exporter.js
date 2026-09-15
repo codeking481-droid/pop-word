@@ -25,12 +25,17 @@ export function downloadBlob(blob, filename) {
   setTimeout(() => URL.revokeObjectURL(url), 4000);
 }
 
-export async function recordVideo(renderer, { duration, onProgress }) {
+export async function recordVideo(renderer, { duration, onProgress, transparentBg = false }) {
   if (typeof MediaRecorder === 'undefined' || !renderer?.canvas?.captureStream) {
     throw new Error('Video recording is not supported by this browser');
   }
 
-  const mimeType = pickVideoMime();
+  const transparentMime = 'video/webm;codecs=vp9';
+  const mimeType = transparentBg && MediaRecorder.isTypeSupported(transparentMime)
+    ? transparentMime
+    : transparentBg && MediaRecorder.isTypeSupported('video/webm')
+    ? 'video/webm'
+    : pickVideoMime();
   if (!mimeType) throw new Error('This browser cannot encode a supported video format');
   const safeDuration = Number(duration);
   if (!Number.isFinite(safeDuration) || safeDuration <= 0) throw new Error('Nothing to export');

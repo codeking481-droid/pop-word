@@ -29,6 +29,10 @@ single, batch, or multi-format export consumes one trial export. Once
 The editor also includes an optional Social safe zones preview overlay. It is
 visual guidance only and is never included in exported videos.
 
+For picture-in-picture captions, enable **Transparent BG (PiP for CapCut)**.
+The editor exports a VP9 WebM with a transparent canvas when the browser
+supports it; import that file as an overlay in CapCut or InShot.
+
 ## Paystack Pro activation
 
 The Upgrade button starts a Paystack transaction through the Cloudflare Pages

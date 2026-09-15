@@ -57,6 +57,7 @@ export default function Home() {
     mediaLibrary: [],
     showProgressbar: true,
     showSafeZones: false,
+    transparentBg: false,
     autoHighlight: false,
     highlightColor: '#FFD700',
     emojiPop: false,
@@ -305,9 +306,10 @@ export default function Home() {
     try {
       const blob = await recordVideo(ctx.r, {
         duration: ctx.dur,
+        transparentBg: options.transparentBg,
         onProgress: (p) => setExporting({ type: 'MP4', progress: p }),
       });
-      downloadBlob(blob, 'popup-video.' + (blob.type.includes('mp4') ? 'mp4' : 'webm'));
+      downloadBlob(blob, options.transparentBg ? 'popword-transparent-video.webm' : 'popup-video.' + (blob.type.includes('mp4') ? 'mp4' : 'webm'));
       await recordTrialExport();
       toast.success('Video ready!');
     } catch (e) {
@@ -341,9 +343,10 @@ export default function Home() {
         try {
           const blob = await recordVideo(renderer, {
             duration: dur,
+            transparentBg: options.transparentBg,
             onProgress: () => {},
           });
-          downloadBlob(blob, `popword-${i + 1}.${blob.type.includes('mp4') ? 'mp4' : 'webm'}`);
+          downloadBlob(blob, options.transparentBg ? `popword-transparent-${i + 1}.webm` : `popword-${i + 1}.${blob.type.includes('mp4') ? 'mp4' : 'webm'}`);
           await recordTrialExport();
         } catch (e) {
           toast.error(`Video ${i + 1} failed${e?.message ? `: ${e.message}` : ''}`);
@@ -374,8 +377,8 @@ export default function Home() {
         if (dur <= 0 || !r.hasContent()) continue;
         if (!canTrialExport()) break;
         try {
-          const blob = await recordVideo(r, { duration: dur, onProgress: () => {} });
-          downloadBlob(blob, `popword-${a.replace(':', 'x')}.${blob.type.includes('mp4') ? 'mp4' : 'webm'}`);
+          const blob = await recordVideo(r, { duration: dur, transparentBg: options.transparentBg, onProgress: () => {} });
+          downloadBlob(blob, options.transparentBg ? `popword-transparent-${a.replace(':', 'x')}.webm` : `popword-${a.replace(':', 'x')}.${blob.type.includes('mp4') ? 'mp4' : 'webm'}`);
           await recordTrialExport();
           completed.push(a);
         } catch (e) {
