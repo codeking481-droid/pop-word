@@ -389,8 +389,7 @@ export default function Home() {
                 </span>
                 {!isPro && (
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] font-semibold text-white/50" title="Approximate USD display; checkout is charged in NGN">~$2/mo</span>
-                    <button type="button" onClick={handleUpgrade} disabled={upgradeLoading} className="rounded-full bg-[#00FF62] px-2.5 py-1 text-[11px] font-bold text-black transition hover:bg-[#66ff9a] disabled:cursor-wait disabled:opacity-60">{upgradeLoading ? 'Opening...' : 'Upgrade'}</button>
+                    <button type="button" onClick={handleUpgrade} disabled={upgradeLoading} title="Approximate USD display; checkout is charged in NGN" className="rounded-full bg-[#00FF62] px-3 py-1 text-[11px] font-bold text-black transition hover:bg-[#66ff9a] disabled:cursor-wait disabled:opacity-60">{upgradeLoading ? 'Opening...' : 'Upgrade — $2/mo'}</button>
                   </div>
                 )}
                 <span className="max-w-[180px] truncate text-xs text-white/55">{user.email}</span>
