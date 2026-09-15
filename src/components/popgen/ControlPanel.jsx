@@ -39,6 +39,13 @@ const ASPECTS = [
   { id: '1:1', label: '1:1', hint: 'Square' },
   { id: '4:5', label: '4:5', hint: 'Portrait' },
 ];
+const COMBINE_STYLES = [
+  { id: 'motionTypographySmooth', label: 'Motion Typography Smooth', detail: 'Yellow/Blue - Matt Lou' },
+  { id: 'stackReplace', label: 'Stack Replace', detail: 'Green/Black' },
+  { id: 'pop', label: 'POP Classic', detail: 'Fast word pop' },
+  { id: 'hormozi', label: 'Hormozi Bold', detail: 'Coming soon', disabled: true },
+  { id: 'appleMinimal', label: 'Apple Minimal', detail: 'Coming soon', disabled: true },
+];
 
 function MediaThumb({ item }) {
   if (item.type === 'video') {
@@ -120,7 +127,32 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
       </section>
 
       <section className="rounded-2xl border border-[#00FF62]/35 bg-[#00FF62]/[0.06] p-3 shadow-[0_0_24px_-12px_rgba(0,255,98,0.65)]">
-        <Label>Animation Style</Label>
+        <Label>Choose Styles to Combine (tick many)</Label>
+        <div className="space-y-1.5">
+          {COMBINE_STYLES.map((style) => {
+            const selected = (options.selectedStyles || ['pop']).includes(style.id);
+            return (
+              <label key={style.id} className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 ${style.disabled ? 'border-white/10 opacity-45' : selected ? 'border-[#00FF62]/60 bg-[#00FF62]/10' : 'border-white/10 bg-black/20'}`}>
+                <input
+                  type="checkbox"
+                  checked={selected}
+                  disabled={style.disabled}
+                  onChange={(e) => {
+                    const current = options.selectedStyles || ['pop'];
+                    const next = e.target.checked ? [...current, style.id] : current.filter((id) => id !== style.id);
+                    update({ selectedStyles: next.length ? next : ['pop'], animation: next.length === 1 && next[0] === 'pop' ? 'Pop' : options.animation });
+                  }}
+                  className="h-4 w-4 accent-[#00FF62]"
+                />
+                <span className="min-w-0 flex-1 text-xs font-semibold text-white/85">{style.label}<span className="ml-1 font-normal text-white/40">- {style.detail}</span></span>
+              </label>
+            );
+          })}
+        </div>
+        <p className="mt-2 rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-[11px] leading-relaxed text-white/55">
+          Your perfect clip rotates: {(options.selectedStyles || ['pop']).map((id) => COMBINE_STYLES.find((style) => style.id === id)?.label || id).join(' → ')} → repeat.
+        </p>
+        <Label>Single style details</Label>
         <select
           value={options.animation}
           onChange={(e) => update({ animation: e.target.value })}
@@ -130,7 +162,7 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
             <option key={a} value={a} className="bg-[#121212]">{a}</option>
           ))}
         </select>
-        {options.animation === 'Motion Typography' && (
+        {options.animation === 'Motion Typography' && (options.selectedStyles || []).length <= 1 && (
           <div className="mt-2 space-y-2">
             <label className="flex items-center justify-between rounded-xl border border-white/15 bg-black/40 px-3 py-2.5 text-xs text-white/75">
               <span>Clean background (no decorations)</span>

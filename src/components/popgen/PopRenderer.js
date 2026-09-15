@@ -79,7 +79,8 @@ export default class PopRenderer {
       || opts.minimalCards !== previous.minimalCards
       || opts.motionText !== previous.motionText
       || opts.motionSpeed !== previous.motionSpeed
-      || opts.motionCleanBackground !== previous.motionCleanBackground;
+      || opts.motionCleanBackground !== previous.motionCleanBackground
+      || opts.selectedStyles !== previous.selectedStyles;
     this.options = { ...this.options, ...opts };
     if (opts.onTimeUpdate) this.onTimeUpdate = opts.onTimeUpdate;
     if (contentChanged) {
@@ -133,6 +134,11 @@ export default class PopRenderer {
 
   getDuration() {
     const template = this.options.template || this.options.mode;
+    const selectedStyles = this.options.selectedStyles || [];
+    if (selectedStyles.length > 1) {
+      const speed = Math.max(0.25, Number(this.options.motionSpeed) || 0.7);
+      return Math.max(2, this._motionChunks().length * 0.432) / speed;
+    }
     if (template === 'motion' || ['Motion Typography', 'Minimal Cards', 'Flow Wave'].includes(this.options.animation)) {
       const speed = Math.max(0.25, Number(this.options.motionSpeed) || 1);
       const baseDuration = this.options.animation === 'Minimal Cards'
@@ -155,6 +161,8 @@ export default class PopRenderer {
 
   hasContent() {
     const template = this.options.template || this.options.mode;
+    const selectedStyles = this.options.selectedStyles || [];
+    if (selectedStyles.length > 1) return this._motionChunks().length > 0;
     if (template === 'motion' || this.options.animation === 'Motion Typography') return this._motionChunks().length > 0;
     if (template === 'minimal' || this.options.animation === 'Minimal Cards') return (this.options.minimalCards || []).length > 0 || this._scriptChunks().length > 0;
     if (template === 'flow' || this.options.animation === 'Flow Wave') return Boolean(String(this.options.flowSentence || this.options.script || '').trim());
@@ -272,7 +280,9 @@ export default class PopRenderer {
       ctx.scale(zoom, zoom);
       ctx.translate(-W / 2, -H / 2);
     }
-    if (template === 'motion') {
+    if ((this.options.selectedStyles || []).length > 1) {
+      this._renderCombinedStyles(t);
+    } else if (template === 'motion') {
       this._renderMotionTypographySmooth(t);
     } else if (template === 'minimal' || this.options.animation === 'Minimal Cards') {
       this._renderMinimal(t * Math.max(0.25, Number(this.options.motionSpeed) || 1));
@@ -315,6 +325,28 @@ export default class PopRenderer {
       for (let i = 0; i < words.length; i += 3) chunks.push(words.slice(i, i + 3).join(' '));
       return chunks;
     });
+  }
+
+  _renderCombinedStyles(t) {
+    const { ctx, W, H, options } = this;
+    const chunks = this._motionChunks();
+    const selected = options.selectedStyles || ['pop'];
+    if (!chunks.length) return;
+    if (options.transparentBg) ctx.clearRect(0, 0, W, H);
+    else this._drawBackground(t);
+    const speed = Math.max(0.25, Number(options.motionSpeed) || 0.7);
+    const step = 0.432;
+    const duration = Math.max(2, chunks.length * step);
+    const time = ((t * speed) % duration + duration) % duration;
+    const index = Math.floor(time / step) % chunks.length;
+    const progress = Math.min(1, (time - index * step) / step);
+    const renderItem = (itemIndex, itemProgress) => {
+      const style = selected[itemIndex % selected.length];
+      const animation = style === 'pop' ? 'Pop' : style === 'stackReplace' ? 'Slide Up' : 'Scale Shadow';
+      this._renderWord(chunks[itemIndex], itemProgress, itemIndex, chunks.length, null, false, animation);
+    };
+    if (index > 0 && progress < 0.75) renderItem(index - 1, 0.8 + progress * 0.2);
+    renderItem(index, progress);
   }
 
   _renderMotionTypographySmooth(t) {
@@ -849,11 +881,11 @@ export default class PopRenderer {
     ctx.fillText(e, 0, -fontSize * 1.05);
   }
 
-  _renderWord(word, progress, idx, total, cat, isHook) {
+  _renderWord(word, progress, idx, total, cat, isHook, animationOverride = null) {
     const { ctx, W, H, options } = this;
     const baseColor = options.textColor || '#00FF62';
     const font = options.font || 'Bold';
-    let anim = options.animation || 'Pop';
+    let anim = animationOverride || options.animation || 'Pop';
     let color = (options.autoHighlight && this._isKey(word)) ? options.highlightColor || '#FFD700' : baseColor;
     let scaleMul = 1;
     let forceEmoji = null;

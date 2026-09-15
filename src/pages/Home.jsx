@@ -50,6 +50,7 @@ export default function Home() {
     textColor: '#00FF62',
     font: 'Bold',
     animation: 'Pop',
+    selectedStyles: ['pop'],
     wordDuration: 0.4,
     uppercase: true,
     aspect: '9:16',
