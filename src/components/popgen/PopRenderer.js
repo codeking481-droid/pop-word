@@ -278,83 +278,80 @@ export default class PopRenderer {
   }
 
   _drawMinimalBackground() {
-    const { ctx, W, H } = this;
-    if (this.options.transparentBg) return;
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, W, H);
-    ctx.fillStyle = '#f2f4f7';
-    ctx.beginPath();
-    ctx.moveTo(W * 0.51, 0);
-    ctx.lineTo(W, 0);
-    ctx.lineTo(W, H);
-    ctx.lineTo(W * 0.43, H);
-    ctx.closePath();
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(17,24,39,0.08)';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.moveTo(W * 0.51, 0);
-    ctx.lineTo(W * 0.43, H);
-    ctx.stroke();
+    this._drawBackground(0);
   }
 
   _motionChunks() {
     const text = String(this.options.motionText || this.options.script || '').trim();
     if (!text) return [];
-    const lines = text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
-    if (lines.length > 1) return lines;
-    const words = text.split(/\s+/).filter(Boolean);
-    const chunks = [];
-    for (let i = 0; i < words.length; i += 3) chunks.push(words.slice(i, i + 3).join(' '));
-    return chunks;
+    return text.split(/(?<=[?.,!])\s+|\n/).flatMap((segment) => {
+      const words = segment.trim().split(/\s+/).filter(Boolean);
+      if (words.length <= 3) return words.length ? [words.join(' ')] : [];
+      const chunks = [];
+      for (let i = 0; i < words.length; i += 2) chunks.push(words.slice(i, i + 2).join(' '));
+      return chunks;
+    });
   }
 
   _renderMotionTypographySmooth(t) {
     const { ctx, W, H, options } = this;
     if (!options.transparentBg) {
-      ctx.fillStyle = options.motionBgColor || '#FFEB3B';
+      ctx.fillStyle = options.motionBgColor || '#FFEB00';
       ctx.fillRect(0, 0, W, H);
     }
     const chunks = this._motionChunks();
     if (!chunks.length) return;
-    const totalDuration = Math.max(2, chunks.length * 0.65);
+    const durationPerChunk = 0.72;
+    const totalDuration = Math.max(2, chunks.length * durationPerChunk);
+    const overlap = 0.4;
+    const step = durationPerChunk * (1 - overlap);
     const time = ((t % totalDuration) + totalDuration) % totalDuration;
-    const chunkDuration = totalDuration / chunks.length;
-    const easeOutExpo = (x) => (x >= 1 ? 1 : 1 - (2 ** (-10 * Math.max(0, x))));
+    const easeOutBack = (x, overshoot = 1.4) => {
+      const c3 = overshoot + 1;
+      return 1 + c3 * ((x - 1) ** 3) + overshoot * ((x - 1) ** 2);
+    };
     chunks.forEach((chunk, index) => {
-      const start = index * chunkDuration;
-      let local = (time - start) / chunkDuration;
-      if (local < -0.15 || local > 1.15) return;
+      const start = index * step;
+      const localSeconds = time - start;
+      if (localSeconds < -durationPerChunk * overlap || localSeconds > durationPerChunk) return;
       let y = 0;
       let scale = 1;
       let alpha = 1;
-      if (local < 0.15) {
-        const progress = easeOutExpo((local + 0.15) / 0.3);
-        y = (1 - progress) * H;
-        scale = 0.85 + progress * 0.15;
+      let velocity = 0;
+      if (localSeconds < 0) {
+        const progress = Math.min(1, Math.max(0, (localSeconds + durationPerChunk * overlap) / (durationPerChunk * overlap)));
+        const eased = easeOutBack(progress);
+        y = (1 - eased) * H * 1.1;
+        scale = 1.15 - eased * 0.15;
+        velocity = 1 - progress;
         alpha = progress;
-      } else if (local > 0.8) {
-        const progress = Math.min(1, (local - 0.8) / 0.35);
-        y = -easeOutExpo(progress) * H;
-        scale = 1 - progress * 0.1;
+      } else if (localSeconds > durationPerChunk - 0.38) {
+        const progress = Math.min(1, (localSeconds - (durationPerChunk - 0.38)) / 0.38);
+        y = -progress * H * 1.1;
+        scale = 1 - progress * 0.08;
+        velocity = progress;
         alpha = 1 - progress;
       }
       const emphasis = index % 2 === 1 || chunk.split(/\s+/).some((word) => word.length > 6);
-      const maxWidth = W * 0.85;
-      let fontSize = W * (chunk.length > 22 ? 0.09 : 0.12);
-      ctx.font = `900 ${fontSize}px Anton, Inter, ui-sans-serif, sans-serif`;
+      const maxWidth = W * 0.92;
+      let fontSize = W * (chunk.length <= 15 ? 0.135 : 0.10);
+      ctx.font = `1000 ${fontSize}px Anton, Inter, ui-sans-serif, sans-serif`;
       while (ctx.measureText(chunk).width > maxWidth && fontSize > W * 0.055) {
         fontSize *= 0.94;
-        ctx.font = `900 ${fontSize}px Anton, Inter, ui-sans-serif, sans-serif`;
+        ctx.font = `1000 ${fontSize}px Anton, Inter, ui-sans-serif, sans-serif`;
       }
       ctx.save();
       ctx.globalAlpha = alpha;
       ctx.translate(W / 2, H / 2 + y);
       ctx.scale(scale, scale);
-      ctx.fillStyle = emphasis ? '#3A4CFF' : '#111111';
+      if ('letterSpacing' in ctx) ctx.letterSpacing = '-0.05em';
+      ctx.filter = velocity ? `blur(${Math.abs(velocity) * 0.3}px)` : 'none';
+      ctx.fillStyle = emphasis ? '#2D4BFF' : '#111111';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(chunk, 0, 0);
+      ctx.filter = 'none';
+      if ('letterSpacing' in ctx) ctx.letterSpacing = 'normal';
       ctx.restore();
     });
   }
@@ -476,11 +473,7 @@ export default class PopRenderer {
 
   _renderFlow(t) {
     const { ctx, W, H, options } = this;
-    if (!options.transparentBg) {
-    const grad = ctx.createLinearGradient(0, 0, W, H);
-    grad.addColorStop(0, '#090b25'); grad.addColorStop(0.52, '#172554'); grad.addColorStop(1, '#111827');
-    ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
-    }
+    this._drawBackground(t);
     const height = Math.max(20, Math.min(H * 0.18, Number(options.flowWaveHeight) || H * 0.09));
     const speed = Math.max(0.05, Math.min(6, Number(options.flowWaveSpeed) || 1));
     const frequency = Math.max(0.2, Math.min(8, Number(options.flowWaveFrequency) || 2.2));
