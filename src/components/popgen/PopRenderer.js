@@ -78,7 +78,8 @@ export default class PopRenderer {
       || opts.flowSentence !== previous.flowSentence
       || opts.minimalCards !== previous.minimalCards
       || opts.motionText !== previous.motionText
-      || opts.motionSpeed !== previous.motionSpeed;
+      || opts.motionSpeed !== previous.motionSpeed
+      || opts.motionCleanBackground !== previous.motionCleanBackground;
     this.options = { ...this.options, ...opts };
     if (opts.onTimeUpdate) this.onTimeUpdate = opts.onTimeUpdate;
     if (contentChanged) {
@@ -324,12 +325,15 @@ export default class PopRenderer {
       const activeText = String(this._motionChunks()[Math.floor((t * Math.max(0.25, Number(options.motionSpeed) || 1)) / 0.432) % Math.max(1, this._motionChunks().length)] || '').toLowerCase();
       const flipWords = ['that', 'looks', 'feels', 'professional', 'skill', 'instantly'];
       const shouldFlip = flipWords.some((word) => activeText.includes(word));
-      const customBackground = options.background && !['stars', 'solid'].includes(options.background);
+      const customBackground = options.background && !['stars', 'galaxy', 'grid'].includes(options.background);
       if (customBackground || options.background === 'solid' && options.bgColor && options.bgColor !== '#00C853') {
         this._drawBackground(t);
       } else {
-        ctx.fillStyle = shouldFlip ? '#0A0A0A' : '#FFEB00';
-        ctx.fillRect(0, 0, W, H);
+        if (options.motionCleanBackground === false && options.background) this._drawBackground(t);
+        else {
+          ctx.fillStyle = shouldFlip ? '#0A0A0A' : options.motionBgColor || '#FFEB00';
+          ctx.fillRect(0, 0, W, H);
+        }
       }
     } else {
       ctx.fillStyle = options.motionBgColor || '#FFEB00';
@@ -790,6 +794,16 @@ export default class PopRenderer {
         break;
       case 'Fade Up':
         if (progress < 0.35) { y = (1 - progress / 0.35) * 90; alpha = progress / 0.35; }
+        break;
+      case 'Slide Left':
+        if (progress < 0.35) { x = (1 - progress / 0.35) * 160; alpha = progress / 0.35; }
+        break;
+      case 'Slide Right':
+        if (progress < 0.35) { x = -(1 - progress / 0.35) * 160; alpha = progress / 0.35; }
+        break;
+      case 'Zoom Reveal':
+        scale = 0.65 + popScale(progress) * 0.35;
+        if (progress < 0.3) alpha = progress / 0.3;
         break;
       case 'Shake':
         scale = popScale(progress);

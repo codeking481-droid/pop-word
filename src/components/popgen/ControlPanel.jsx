@@ -29,6 +29,9 @@ const ANIMATIONS = [
   'Motion Typography',
   'Minimal Cards',
   'Flow Wave',
+  'Slide Left',
+  'Slide Right',
+  'Zoom Reveal',
 ];
 const ASPECTS = [
   { id: '9:16', label: '9:16', hint: 'Vertical' },
@@ -129,6 +132,15 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
         </select>
         {options.animation === 'Motion Typography' && (
           <div className="mt-2 space-y-2">
+            <label className="flex items-center justify-between rounded-xl border border-white/15 bg-black/40 px-3 py-2.5 text-xs text-white/75">
+              <span>Clean background (no decorations)</span>
+              <input
+                type="checkbox"
+                checked={options.motionCleanBackground !== false}
+                onChange={(e) => update({ motionCleanBackground: e.target.checked })}
+                className="h-4 w-4 accent-[#00FF62]"
+              />
+            </label>
             <select
               value={options.motionDirection || 'mixed'}
               onChange={(e) => update({ motionDirection: e.target.value })}
