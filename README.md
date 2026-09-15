@@ -37,7 +37,9 @@ The **Motion Typography Smooth** template defaults to `#FFEB00` with large,
 tight typography, alternating black/blue phrase emphasis, and smooth stacked
 enter/exit motion. Its background can be changed with the color controls. Add
 phrases on separate lines for exact timing, or enter a longer sentence and it
-will split into punctuation and two-word meaning chunks automatically.
+will split into punctuation and two-word meaning chunks automatically. Use the
+Motion speed slider to slow down or speed up the animation; shared solid,
+gradient, image, and uploaded media backgrounds remain visible behind the text.
 
 ## Paystack Pro activation
 

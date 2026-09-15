@@ -518,10 +518,14 @@ function MotionControls({ options, update }) {
       <Field label="Background color">
         <div className="flex flex-wrap items-center gap-2">
           {['#FFEB00', '#FFFFFF', '#111111', '#2D4BFF', '#FF6B6B', '#7C3AED'].map((color) => (
-            <button key={color} type="button" onClick={() => update({ motionBgColor: color })} className={`h-8 w-8 rounded-full border-2 ${options.motionBgColor === color ? 'border-[#00FF62]' : 'border-white/20'}`} style={{ background: color }} aria-label={`Use ${color} background`} />
+            <button key={color} type="button" onClick={() => update({ motionBgColor: color, background: 'solid', bgColor: color })} className={`h-8 w-8 rounded-full border-2 ${options.motionBgColor === color ? 'border-[#00FF62]' : 'border-white/20'}`} style={{ background: color }} aria-label={`Use ${color} background`} />
           ))}
-          <input type="color" value={options.motionBgColor || '#FFEB00'} onChange={(e) => update({ motionBgColor: e.target.value })} className="h-8 w-10 cursor-pointer rounded border-0 bg-transparent p-0" aria-label="Custom motion background color" />
+          <input type="color" value={options.motionBgColor || '#FFEB00'} onChange={(e) => update({ motionBgColor: e.target.value, background: 'solid', bgColor: e.target.value })} className="h-8 w-10 cursor-pointer rounded border-0 bg-transparent p-0" aria-label="Custom motion background color" />
         </div>
+      </Field>
+      <Field label={`Motion speed — ${(options.motionSpeed || 1).toFixed(2)}x`}>
+        <input type="range" min="0.25" max="2.5" step="0.05" value={options.motionSpeed || 1} onChange={(e) => update({ motionSpeed: Number(e.target.value) })} className="pop-range w-full" />
+        <div className="mt-1 flex justify-between text-[10px] text-white/35"><span>Slower</span><span>Faster</span></div>
       </Field>
       <Field label="Phrases">
         <textarea

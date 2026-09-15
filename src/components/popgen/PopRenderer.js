@@ -75,7 +75,9 @@ export default class PopRenderer {
       || opts.template !== previous.template
       || opts.mode !== previous.mode
       || opts.flowSentence !== previous.flowSentence
-      || opts.minimalCards !== previous.minimalCards;
+      || opts.minimalCards !== previous.minimalCards
+      || opts.motionText !== previous.motionText
+      || opts.motionSpeed !== previous.motionSpeed;
     this.options = { ...this.options, ...opts };
     if (opts.onTimeUpdate) this.onTimeUpdate = opts.onTimeUpdate;
     if (contentChanged) {
@@ -129,7 +131,11 @@ export default class PopRenderer {
 
   getDuration() {
     const template = this.options.template || this.options.mode;
-    if (template === 'motion') return Math.max(2, this._motionChunks().length * 0.65);
+    if (template === 'motion') {
+      const speed = Math.max(0.25, Number(this.options.motionSpeed) || 1);
+      const baseDuration = Math.max(2, this._motionChunks().length * 0.72);
+      return baseDuration / speed;
+    }
     if (template === 'minimal') return Math.max(4, Math.min(60, (this.options.minimalCards || []).length * 0.8 + 2));
     if (template === 'flow') {
       const sentence = (this.options.flowSentence || this.options.script || '').trim();
@@ -295,17 +301,22 @@ export default class PopRenderer {
 
   _renderMotionTypographySmooth(t) {
     const { ctx, W, H, options } = this;
-    if (!options.transparentBg) {
+    if (options.transparentBg) {
+      ctx.clearRect(0, 0, W, H);
+    } else if (options.background && options.background !== 'stars') {
+      this._drawBackground(t);
+    } else {
       ctx.fillStyle = options.motionBgColor || '#FFEB00';
       ctx.fillRect(0, 0, W, H);
     }
     const chunks = this._motionChunks();
     if (!chunks.length) return;
+    const speed = Math.max(0.25, Number(options.motionSpeed) || 1);
     const durationPerChunk = 0.72;
     const totalDuration = Math.max(2, chunks.length * durationPerChunk);
     const overlap = 0.4;
     const step = durationPerChunk * (1 - overlap);
-    const time = ((t % totalDuration) + totalDuration) % totalDuration;
+    const time = (((t * speed) % totalDuration) + totalDuration) % totalDuration;
     const easeOutBack = (x, overshoot = 1.4) => {
       const c3 = overshoot + 1;
       return 1 + c3 * ((x - 1) ** 3) + overshoot * ((x - 1) ** 2);
@@ -347,6 +358,8 @@ export default class PopRenderer {
       if ('letterSpacing' in ctx) ctx.letterSpacing = '-0.05em';
       ctx.filter = velocity ? `blur(${Math.abs(velocity) * 0.3}px)` : 'none';
       ctx.fillStyle = emphasis ? '#2D4BFF' : '#111111';
+      ctx.shadowColor = 'rgba(255,255,255,0.7)';
+      ctx.shadowBlur = 8;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(chunk, 0, 0);
