@@ -52,6 +52,7 @@ export default function Home() {
     customMedia: null,
     mediaLibrary: [],
     showProgressbar: true,
+    showSafeZones: false,
     autoHighlight: false,
     highlightColor: '#FFD700',
     emojiPop: false,

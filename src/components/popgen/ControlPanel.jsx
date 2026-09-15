@@ -313,6 +313,7 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
         <Label>Effects</Label>
         <div className="space-y-2.5">
           <ToggleRow label="Top progress bar" on={options.showProgressbar} onClick={() => update({ showProgressbar: !options.showProgressbar })} />
+          <ToggleRow label="Show social safe zones" on={options.showSafeZones} onClick={() => update({ showSafeZones: !options.showSafeZones })} />
           <ToggleRow label="Auto-highlight key words" on={options.autoHighlight} onClick={() => update({ autoHighlight: !options.autoHighlight })} />
           {options.autoHighlight && (
             <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-black/40 px-3 py-2">

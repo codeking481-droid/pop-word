@@ -113,6 +113,15 @@ export default function PreviewPanel({ options, onReady, onExportVideo, exportin
             style={{ aspectRatio }}
           >
             <canvas ref={canvasRef} className="h-full w-full" />
+            {options.showSafeZones && (
+              <>
+                <div className="pointer-events-none absolute inset-x-0 top-[12%] border-t border-dashed border-yellow-300/80" />
+                <div className="pointer-events-none absolute inset-x-0 bottom-[24%] border-t border-dashed border-yellow-300/80" />
+                <div className="pointer-events-none absolute inset-x-[8%] top-[12%] bottom-[24%] rounded border border-yellow-300/30" />
+                <span className="pointer-events-none absolute left-2 top-[12%] -translate-y-full rounded bg-black/70 px-1.5 py-0.5 text-[9px] font-semibold text-yellow-200">Keep captions inside</span>
+                <span className="pointer-events-none absolute bottom-[24%] right-2 translate-y-full rounded bg-black/70 px-1.5 py-0.5 text-[9px] font-semibold text-yellow-200">Avoid app controls</span>
+              </>
+            )}
             <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-white/5 via-transparent to-black/20" />
           </div>
         </div>

@@ -26,6 +26,9 @@ Signed-in users receive exactly three trial video exports. Each successful
 single, batch, or multi-format export consumes one trial export. Once
 `download_count` reaches 3, further exports require an active Pro subscription.
 
+The editor also includes an optional Social safe zones preview overlay. It is
+visual guidance only and is never included in exported videos.
+
 ## Paystack Pro activation
 
 The Upgrade button starts a Paystack transaction through the Cloudflare Pages
