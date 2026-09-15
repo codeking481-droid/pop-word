@@ -21,7 +21,7 @@ const KEYWORDS = new Set([
 export default class PopRenderer {
   constructor(canvas, options = {}) {
     this.canvas = canvas;
-    this.ctx = canvas.getContext('2d', { alpha: false });
+    this.ctx = canvas.getContext('2d', { alpha: true });
     this.options = options;
     this.speed = 1;
     this.playing = false;

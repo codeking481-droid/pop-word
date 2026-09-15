@@ -37,7 +37,8 @@ export async function recordVideo(renderer, { duration, onProgress, transparentB
     ? 'video/webm'
     : pickVideoMime();
   if (!mimeType) throw new Error('This browser cannot encode a supported video format');
-  const safeDuration = Number(duration);
+  const requestedDuration = Number(duration);
+  const safeDuration = transparentBg ? Math.max(2, requestedDuration) : requestedDuration;
   if (!Number.isFinite(safeDuration) || safeDuration <= 0) throw new Error('Nothing to export');
 
   const stream = renderer.canvas.captureStream(30);
