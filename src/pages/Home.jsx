@@ -139,17 +139,9 @@ export default function Home() {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session?.access_token) throw new Error('Your sign-in session has expired');
-      const response = await fetch('/api/create-popword-payment', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify({ email: user.email }),
-      });
-      const result = await response.json();
-      if (!response.ok || !result.authorization_url) throw new Error(result.error || 'Could not start checkout');
-      window.location.assign(result.authorization_url);
+      const gumroadPage = import.meta.env.VITE_GUMROAD_PAGE || 'https://coderking7.gumroad.com/l/qyveh';
+      const paymentUrl = `${gumroadPage}${gumroadPage.includes('?') ? '&' : '?'}email=${encodeURIComponent(user.email)}`;
+      window.open(paymentUrl, '_blank', 'noopener,noreferrer');
     } catch (error) {
       toast.error(error.message || 'Could not start checkout');
       setUpgradeLoading(false);

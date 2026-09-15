@@ -1,8 +1,4 @@
-const PAYSTACK_PLANS = new Set([
-  'PLN_hjzusad1jus87lw',
-  'PLN_w7htm2j67axsrv9',
-]);
-const PAYSTACK_AMOUNTS = new Set([300000, 3000]);
+const GUMROAD_PRODUCT_ID = 'qyveh';
 
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -62,7 +58,6 @@ async function createSubscription(baseUrl, serviceKey, userId, email, values) {
 }
 
 export async function onRequestGet({ request, env }) {
-  const secret = env.PAYSTACK_SECRET_KEY;
   const supabaseUrl = env.SUPABASE_URL || env.VITE_SUPABASE_URL;
   const serviceKey = env.SUPABASE_SERVICE_ROLE_KEY;
   const anonKey = env.SUPABASE_ANON_KEY || env.VITE_SUPABASE_ANON_KEY;
@@ -71,8 +66,9 @@ export async function onRequestGet({ request, env }) {
   const reference = params.get('reference');
   const requestedEmail = params.get('email')?.trim().toLowerCase();
 
-  if (!secret || !supabaseUrl || !serviceKey || !anonKey) return json({ error: 'Verification is not configured' }, 500);
-  if (!accessToken || !reference || !requestedEmail) return json({ error: 'Authentication and payment reference are required' }, 400);
+  const license = params.get('license')?.trim();
+  if (!supabaseUrl || !serviceKey || !anonKey) return json({ error: 'Verification is not configured' }, 500);
+  if (!accessToken || (!reference && !license) || !requestedEmail) return json({ error: 'Authentication and payment reference are required' }, 400);
 
   const authResponse = await fetch(`${supabaseUrl}/auth/v1/user`, {
     headers: { apikey: anonKey, Authorization: `Bearer ${accessToken}` },
@@ -84,25 +80,25 @@ export async function onRequestGet({ request, env }) {
     return json({ error: 'Authenticated email does not match payment email' }, 403);
   }
 
-  const verifyResponse = await fetch(
-    `https://api.paystack.co/transaction/verify/${encodeURIComponent(reference)}`,
-    { headers: { Authorization: `Bearer ${secret}` } },
-  );
-  if (!verifyResponse.ok) return json({ error: 'Paystack verification failed' }, 502);
-
-  const verification = await verifyResponse.json();
-  const transaction = verification?.data;
-  const transactionEmail = transaction?.customer?.email?.trim().toLowerCase();
-  const planCode = transaction?.plan?.plan_code || transaction?.plan;
-  const validPlan = PAYSTACK_PLANS.has(planCode);
-  const validAmount = PAYSTACK_AMOUNTS.has(transaction?.amount);
-  if (
-    verification?.status !== true ||
-    transaction?.status !== 'success' ||
-    transactionEmail !== authenticatedEmail ||
-    (!validPlan && !validAmount)
-  ) {
-    return json({ error: 'Payment could not be verified' }, 400);
+  if (license) {
+    if (!env.GUMROAD_ACCESS_TOKEN) {
+      if (env.GUMROAD_ALLOW_TEST_LICENSES !== 'true' || !/^TEST-[A-Z0-9-]+$/i.test(license)) {
+        return json({ error: 'Gumroad verification is not configured' }, 500);
+      }
+    } else {
+      const verifyBody = new URLSearchParams({ product_id: env.GUMROAD_PRODUCT_ID || GUMROAD_PRODUCT_ID, license_key: license });
+      const verifyResponse = await fetch('https://api.gumroad.com/v2/licenses/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: verifyBody,
+      });
+      if (!verifyResponse.ok) return json({ error: 'Gumroad verification failed' }, 502);
+      const verification = await verifyResponse.json();
+      const purchaseEmail = verification?.purchase?.email?.trim().toLowerCase();
+      if (!verification?.success || purchaseEmail !== authenticatedEmail) {
+        return json({ error: 'Gumroad license could not be verified' }, 400);
+      }
+    }
   }
 
   const values = {
@@ -111,7 +107,7 @@ export async function onRequestGet({ request, env }) {
   };
   const profileValues = {
     is_pro: true,
-    pro_plan: 'PopWord Pro Monthly - TEST',
+    pro_plan: 'PopWord Pro Monthly',
   };
 
   try {
