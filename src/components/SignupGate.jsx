@@ -1,7 +1,7 @@
 import React from 'react';
 import { LogIn } from 'lucide-react';
 
-export default function SignupGate({ onLogin, onClose, loading = false, error = '' }) {
+export default function SignupGate({ onLogin, loading = false, error = '' }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 p-5 backdrop-blur-md" role="dialog" aria-modal="true" aria-labelledby="signup-title">
       <div className="w-full max-w-md rounded-3xl border border-white/10 bg-[#161616] p-7 text-center shadow-2xl">
@@ -12,7 +12,6 @@ export default function SignupGate({ onLogin, onClose, loading = false, error = 
           <LogIn className="h-4 w-4" /> {loading ? 'Opening Google…' : 'Sign up with Google'}
         </button>
         {error && <p className="mt-4 rounded-xl border border-red-400/20 bg-red-400/10 p-3 text-xs text-red-200">{error}</p>}
-        <button type="button" onClick={onClose} className="mt-4 text-[11px] text-white/45 underline underline-offset-4 hover:text-white">Continue without signing in</button>
       </div>
     </div>
   );

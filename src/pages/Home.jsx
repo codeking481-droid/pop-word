@@ -17,13 +17,6 @@ export default function Home() {
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState('');
   const [subscription, setSubscription] = useState(null);
-  const [signupDismissed, setSignupDismissed] = useState(() => {
-    try {
-      return window.localStorage.getItem('popword-signup-dismissed') === 'true';
-    } catch {
-      return false;
-    }
-  });
   const [upgradeLoading, setUpgradeLoading] = useState(false);
   const userRef = useRef(null);
   userRef.current = user;
@@ -415,17 +408,9 @@ export default function Home() {
           success: { iconTheme: { primary: '#00FF62', secondary: '#0A0A0A' } },
         }}
       />
-      {isSupabaseConfigured && authReady && !user && !signupDismissed && (
+      {isSupabaseConfigured && authReady && !user && (
         <SignupGate
           onLogin={signIn}
-          onClose={() => {
-            setSignupDismissed(true);
-            try {
-              window.localStorage.setItem('popword-signup-dismissed', 'true');
-            } catch {
-              // Continue without sign-in should still work if storage is unavailable.
-            }
-          }}
           loading={authLoading}
           error={authError}
         />
