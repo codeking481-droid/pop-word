@@ -74,6 +74,7 @@ export default class PopRenderer {
       || opts.uppercase !== previous.uppercase
       || opts.template !== previous.template
       || opts.mode !== previous.mode
+      || opts.animation !== previous.animation
       || opts.flowSentence !== previous.flowSentence
       || opts.minimalCards !== previous.minimalCards
       || opts.motionText !== previous.motionText
@@ -131,9 +132,13 @@ export default class PopRenderer {
 
   getDuration() {
     const template = this.options.template || this.options.mode;
-    if (template === 'motion' || this.options.animation === 'Motion Typography') {
+    if (template === 'motion' || ['Motion Typography', 'Minimal Cards', 'Flow Wave'].includes(this.options.animation)) {
       const speed = Math.max(0.25, Number(this.options.motionSpeed) || 1);
-      const baseDuration = Math.max(2, this._motionChunks().length * 0.72);
+      const baseDuration = this.options.animation === 'Minimal Cards'
+        ? Math.max(4, Math.min(60, this._scriptChunks().length * 0.8 + 2))
+        : this.options.animation === 'Flow Wave'
+          ? Math.max(4, Math.min(60, String(this.options.script || '').length * 0.075 + 2))
+          : Math.max(2, this._motionChunks().length * 0.72);
       return baseDuration / speed;
     }
     if (template === 'minimal') return Math.max(4, Math.min(60, (this.options.minimalCards || []).length * 0.8 + 2));
@@ -149,9 +154,9 @@ export default class PopRenderer {
 
   hasContent() {
     const template = this.options.template || this.options.mode;
-    if (template === 'motion') return this._motionChunks().length > 0;
-    if (template === 'minimal') return (this.options.minimalCards || []).length > 0;
-    if (template === 'flow') return Boolean(String(this.options.flowSentence || this.options.script || '').trim());
+    if (template === 'motion' || this.options.animation === 'Motion Typography') return this._motionChunks().length > 0;
+    if (template === 'minimal' || this.options.animation === 'Minimal Cards') return (this.options.minimalCards || []).length > 0 || this._scriptChunks().length > 0;
+    if (template === 'flow' || this.options.animation === 'Flow Wave') return Boolean(String(this.options.flowSentence || this.options.script || '').trim());
     return this.getWords().length > 0;
   }
 
@@ -268,10 +273,10 @@ export default class PopRenderer {
     }
     if (template === 'motion') {
       this._renderMotionTypographySmooth(t);
-    } else if (template === 'minimal') {
-      this._renderMinimal(t);
-    } else if (template === 'flow') {
-      this._renderFlow(t);
+    } else if (template === 'minimal' || this.options.animation === 'Minimal Cards') {
+      this._renderMinimal(t * Math.max(0.25, Number(this.options.motionSpeed) || 1));
+    } else if (template === 'flow' || this.options.animation === 'Flow Wave') {
+      this._renderFlow(t * Math.max(0.25, Number(this.options.motionSpeed) || 1));
     } else {
       this._drawBackground(t);
       if (this.options.mode === 'caption') this._renderCaptionMode(t);
@@ -296,6 +301,17 @@ export default class PopRenderer {
       if (words.length <= 3) return words.length ? [words.join(' ')] : [];
       const chunks = [];
       for (let i = 0; i < words.length; i += 2) chunks.push(words.slice(i, i + 2).join(' '));
+      return chunks;
+    });
+  }
+
+  _scriptChunks() {
+    const text = String(this.options.script || '').trim();
+    if (!text) return [];
+    return text.split(/(?<=[?.,!])\s+|\n/).flatMap((segment) => {
+      const words = segment.trim().split(/\s+/).filter(Boolean);
+      const chunks = [];
+      for (let i = 0; i < words.length; i += 3) chunks.push(words.slice(i, i + 3).join(' '));
       return chunks;
     });
   }
@@ -432,7 +448,9 @@ export default class PopRenderer {
   _renderMinimal(t) {
     const { ctx, W, H, options } = this;
     this._drawMinimalBackground();
-    const cards = (options.minimalCards || []).slice(0, 12);
+    const cards = (options.minimalCards || []).length
+      ? options.minimalCards.slice(0, 12)
+      : this._scriptChunks().slice(0, 12).map((text, id) => ({ id, type: 'text', text }));
     const layout = options.minimalLayout || 'scatter';
     const style = options.minimalStyle || 'liquid';
     const cols = layout === 'grid' ? Math.min(3, Math.max(1, Math.ceil(Math.sqrt(Math.max(cards.length, 1))))) : 1;

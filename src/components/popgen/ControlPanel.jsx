@@ -27,6 +27,8 @@ const ANIMATIONS = [
   'Word Highlight',
   'Caption Style',
   'Motion Typography',
+  'Minimal Cards',
+  'Flow Wave',
 ];
 const ASPECTS = [
   { id: '9:16', label: '9:16', hint: 'Vertical' },
@@ -45,7 +47,7 @@ function MediaThumb({ item }) {
 export default function ControlPanel({ options, setOptions, onGenerate, exporting, onAddMedia, onSelectMedia, onRemoveMedia, onApplyPreset, batchScripts, setBatchScripts, onGenerateBatch, batchProgress, onMultiExport, multiExporting }) {
   const fileRef = useRef(null);
   const [dragging, setDragging] = useState(false);
-  const [tab, setTab] = useState(options.template || 'pop');
+  const [tab, setTab] = useState('pop');
   const busy = !!exporting;
 
   const update = (patch) => setOptions((current) => ({ ...current, ...patch }));
@@ -79,8 +81,6 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
       <div className="flex gap-1 rounded-2xl border border-white/10 bg-black/40 p-1">
         {[
           { id: 'pop', label: 'POP' },
-          { id: 'minimal', label: 'MINIMAL' },
-          { id: 'flow', label: 'FLOW' },
         ].map((t) => (
           <button
             key={t.id}
@@ -102,10 +102,8 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
         <BatchPanel value={batchScripts || ''} onChange={setBatchScripts} onGenerate={onGenerateBatch} progress={batchProgress} />
       ) : (
       <>
-      {tab === 'minimal' && <MinimalControls options={options} update={update} />}
-      {tab === 'flow' && <FlowControls options={options} update={update} />}
       {/* Script */}
-      {tab === 'pop' && <section>
+      <section>
         <Label icon={<Sparkles className="h-4 w-4" />}>Your Script</Label>
         <textarea
           value={options.script}
@@ -116,7 +114,7 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
         <div className="mt-1.5 text-right text-xs text-white/40">
           {options.script.trim() ? options.script.trim().split(/\s+/).filter(Boolean).length : 0} words
         </div>
-      </section>}
+      </section>
 
       {/* Aspect ratio */}
       <section>
