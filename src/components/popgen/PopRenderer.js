@@ -349,8 +349,18 @@ export default class PopRenderer {
       const animation = style === 'pop' ? 'Pop' : style === 'stackReplace' ? 'Slide Up' : 'Scale Shadow';
       this._renderWord(chunks[itemIndex], itemProgress, itemIndex, chunks.length, null, false, animation);
     };
-    if (index > 0 && progress < 0.75) renderItem(index - 1, 0.8 + progress * 0.2);
+    if (index > 0 && progress < 0.75) {
+      const exitProgress = progress / 0.75;
+      ctx.save();
+      ctx.translate(0, -H * 0.35 * exitProgress);
+      ctx.globalAlpha = 1 - exitProgress * 0.7;
+      renderItem(index - 1, 0.8 + exitProgress * 0.2);
+      ctx.restore();
+    }
+    ctx.save();
+    ctx.translate(0, H * 0.28 * (1 - progress));
     renderItem(index, progress);
+    ctx.restore();
   }
 
   _renderUniqueChunk(text, progress, style) {
