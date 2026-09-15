@@ -80,6 +80,7 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
           { id: 'pop', label: 'POP' },
           { id: 'minimal', label: 'MINIMAL' },
           { id: 'flow', label: 'FLOW' },
+          { id: 'motion', label: 'MOTION TYPE' },
         ].map((t) => (
           <button
             key={t.id}
@@ -103,6 +104,7 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
       <>
       {tab === 'minimal' && <MinimalControls options={options} update={update} />}
       {tab === 'flow' && <FlowControls options={options} update={update} />}
+      {tab === 'motion' && <MotionControls options={options} update={update} />}
       {/* Script */}
       {tab === 'pop' && <section>
         <Label icon={<Sparkles className="h-4 w-4" />}>Your Script</Label>
@@ -504,6 +506,23 @@ function FlowControls({ options, update }) {
         <input value={options.flowMessage || ''} onChange={(e) => update({ flowMessage: e.target.value })} placeholder="Keep going →" className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2.5 text-sm text-white placeholder:text-white/30" />
       </Field>
       <ToggleRow label="Animated arrow effect" on={options.flowArrows !== false} onClick={() => update({ flowArrows: options.flowArrows === false })} />
+    </section>
+  );
+}
+
+function MotionControls({ options, update }) {
+  return (
+    <section className="space-y-3">
+      <Label>Motion Typography Smooth</Label>
+      <p className="text-xs leading-relaxed text-white/50">Yellow/blue stacked typography with smooth phrase replacement. Add one phrase per line, or use a longer sentence and it will split automatically.</p>
+      <Field label="Phrases">
+        <textarea
+          value={options.motionText || options.script || ''}
+          onChange={(e) => update({ motionText: e.target.value, script: e.target.value })}
+          placeholder="ever wanted to make something visually beautiful"
+          className="h-28 w-full resize-none rounded-xl border border-white/10 bg-black/40 px-3 py-2.5 text-sm text-white placeholder:text-white/30"
+        />
+      </Field>
     </section>
   );
 }

@@ -129,6 +129,7 @@ export default class PopRenderer {
 
   getDuration() {
     const template = this.options.template || this.options.mode;
+    if (template === 'motion') return Math.max(2, this._motionChunks().length * 0.65);
     if (template === 'minimal') return Math.max(4, Math.min(60, (this.options.minimalCards || []).length * 0.8 + 2));
     if (template === 'flow') {
       const sentence = (this.options.flowSentence || this.options.script || '').trim();
@@ -142,6 +143,7 @@ export default class PopRenderer {
 
   hasContent() {
     const template = this.options.template || this.options.mode;
+    if (template === 'motion') return this._motionChunks().length > 0;
     if (template === 'minimal') return (this.options.minimalCards || []).length > 0;
     if (template === 'flow') return Boolean(String(this.options.flowSentence || this.options.script || '').trim());
     return this.getWords().length > 0;
@@ -258,7 +260,9 @@ export default class PopRenderer {
       ctx.scale(zoom, zoom);
       ctx.translate(-W / 2, -H / 2);
     }
-    if (template === 'minimal') {
+    if (template === 'motion') {
+      this._renderMotionTypographySmooth(t);
+    } else if (template === 'minimal') {
       this._renderMinimal(t);
     } else if (template === 'flow') {
       this._renderFlow(t);
@@ -292,6 +296,67 @@ export default class PopRenderer {
     ctx.moveTo(W * 0.51, 0);
     ctx.lineTo(W * 0.43, H);
     ctx.stroke();
+  }
+
+  _motionChunks() {
+    const text = String(this.options.motionText || this.options.script || '').trim();
+    if (!text) return [];
+    const lines = text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+    if (lines.length > 1) return lines;
+    const words = text.split(/\s+/).filter(Boolean);
+    const chunks = [];
+    for (let i = 0; i < words.length; i += 3) chunks.push(words.slice(i, i + 3).join(' '));
+    return chunks;
+  }
+
+  _renderMotionTypographySmooth(t) {
+    const { ctx, W, H, options } = this;
+    if (!options.transparentBg) {
+      ctx.fillStyle = '#FFEB3B';
+      ctx.fillRect(0, 0, W, H);
+    }
+    const chunks = this._motionChunks();
+    if (!chunks.length) return;
+    const totalDuration = Math.max(2, chunks.length * 0.65);
+    const time = ((t % totalDuration) + totalDuration) % totalDuration;
+    const chunkDuration = totalDuration / chunks.length;
+    const easeOutExpo = (x) => (x >= 1 ? 1 : 1 - (2 ** (-10 * Math.max(0, x))));
+    chunks.forEach((chunk, index) => {
+      const start = index * chunkDuration;
+      let local = (time - start) / chunkDuration;
+      if (local < -0.15 || local > 1.15) return;
+      let y = 0;
+      let scale = 1;
+      let alpha = 1;
+      if (local < 0.15) {
+        const progress = easeOutExpo((local + 0.15) / 0.3);
+        y = (1 - progress) * H;
+        scale = 0.85 + progress * 0.15;
+        alpha = progress;
+      } else if (local > 0.8) {
+        const progress = Math.min(1, (local - 0.8) / 0.35);
+        y = -easeOutExpo(progress) * H;
+        scale = 1 - progress * 0.1;
+        alpha = 1 - progress;
+      }
+      const emphasis = index % 2 === 1 || chunk.split(/\s+/).some((word) => word.length > 6);
+      const maxWidth = W * 0.85;
+      let fontSize = W * (chunk.length > 22 ? 0.09 : 0.12);
+      ctx.font = `900 ${fontSize}px Anton, Inter, ui-sans-serif, sans-serif`;
+      while (ctx.measureText(chunk).width > maxWidth && fontSize > W * 0.055) {
+        fontSize *= 0.94;
+        ctx.font = `900 ${fontSize}px Anton, Inter, ui-sans-serif, sans-serif`;
+      }
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.translate(W / 2, H / 2 + y);
+      ctx.scale(scale, scale);
+      ctx.fillStyle = emphasis ? '#3A4CFF' : '#111111';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(chunk, 0, 0);
+      ctx.restore();
+    });
   }
 
   _drawCardText(text, x, y, maxW, fontSize, color = '#111827') {

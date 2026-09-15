@@ -83,6 +83,7 @@ export default function Home() {
     flowWaveFrequency: 2.2,
     flowMessage: 'Keep going',
     flowArrows: true,
+    motionText: '',
     hookBoost: false,
     ctaEnabled: false,
     ctaText: 'Follow for Part 2',
