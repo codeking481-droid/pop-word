@@ -23,7 +23,7 @@ export default function Home() {
   userRef.current = user;
 
   const loadSubscription = async (userId, email) => {
-    const [{ data, error }, { data: profile, error: profileError }] = await Promise.all([
+    const [{ data, error }, { data: profile }] = await Promise.all([
       supabase.from('subscriptions')
       .select('download_count, pro_expiry')
       .eq('user_id', userId)
@@ -33,7 +33,7 @@ export default function Home() {
         .eq('email', email)
         .maybeSingle(),
     ]);
-    if (error && profileError) {
+    if (error) {
       setAuthError(`Account status unavailable: ${error.message}`);
       downloadCountRef.current = null;
       setSubscription(null);
@@ -221,6 +221,7 @@ export default function Home() {
       .from('subscriptions')
       .update({ download_count: nextCount })
       .eq('user_id', user.id)
+      .lt('download_count', 3)
       .select('download_count')
       .maybeSingle();
     if (error) {
@@ -228,6 +229,12 @@ export default function Home() {
       return false;
     }
     if (!data) {
+      if (used > 0) {
+        downloadCountRef.current = 3;
+        setSubscription((current) => ({ ...(current || {}), download_count: 3 }));
+        toast.error('Your 3 trial exports are used. Upgrade to export more videos.');
+        return false;
+      }
       const { data: created, error: createError } = await supabase
         .from('subscriptions')
         .insert({ user_id: user.id, email: user.email, download_count: nextCount })
