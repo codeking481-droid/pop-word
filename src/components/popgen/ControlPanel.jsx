@@ -523,8 +523,8 @@ function MotionControls({ options, update }) {
           <input type="color" value={options.motionBgColor || '#FFEB00'} onChange={(e) => update({ motionBgColor: e.target.value, background: 'solid', bgColor: e.target.value })} className="h-8 w-10 cursor-pointer rounded border-0 bg-transparent p-0" aria-label="Custom motion background color" />
         </div>
       </Field>
-      <Field label={`Motion speed — ${(options.motionSpeed || 1).toFixed(2)}x`}>
-        <input type="range" min="0.25" max="2.5" step="0.05" value={options.motionSpeed || 1} onChange={(e) => update({ motionSpeed: Number(e.target.value) })} className="pop-range w-full" />
+      <Field label={`Motion speed — ${(options.motionSpeed || 0.7).toFixed(2)}x`}>
+        <input type="range" min="0.25" max="2.5" step="0.05" value={options.motionSpeed || 0.7} onChange={(e) => update({ motionSpeed: Number(e.target.value) })} className="pop-range w-full" />
         <div className="mt-1 flex justify-between text-[10px] text-white/35"><span>Slower</span><span>Faster</span></div>
       </Field>
       <Field label="Phrases">

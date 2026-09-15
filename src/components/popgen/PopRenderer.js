@@ -347,9 +347,27 @@ export default class PopRenderer {
       const maxWidth = W * 0.92;
       let fontSize = W * (chunk.length <= 15 ? 0.135 : 0.10);
       ctx.font = `1000 ${fontSize}px Anton, Inter, ui-sans-serif, sans-serif`;
-      while (ctx.measureText(chunk).width > maxWidth && fontSize > W * 0.055) {
+      const wrap = (value) => {
+        const words = value.split(/\s+/).filter(Boolean);
+        const lines = [];
+        let line = '';
+        for (const word of words) {
+          const candidate = line ? `${line} ${word}` : word;
+          if (ctx.measureText(candidate).width > maxWidth && line) {
+            lines.push(line);
+            line = word;
+          } else {
+            line = candidate;
+          }
+        }
+        if (line) lines.push(line);
+        return lines;
+      };
+      let lines = wrap(chunk);
+      while ((lines.length > 3 || lines.some((line) => ctx.measureText(line).width > maxWidth)) && fontSize > W * 0.055) {
         fontSize *= 0.94;
         ctx.font = `1000 ${fontSize}px Anton, Inter, ui-sans-serif, sans-serif`;
+        lines = wrap(chunk);
       }
       ctx.save();
       ctx.globalAlpha = alpha;
@@ -358,11 +376,15 @@ export default class PopRenderer {
       if ('letterSpacing' in ctx) ctx.letterSpacing = '-0.05em';
       ctx.filter = velocity ? `blur(${Math.abs(velocity) * 0.3}px)` : 'none';
       ctx.fillStyle = emphasis ? '#2D4BFF' : '#111111';
-      ctx.shadowColor = 'rgba(255,255,255,0.7)';
-      ctx.shadowBlur = 8;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(chunk, 0, 0);
+      ctx.shadowColor = 'rgba(255,255,255,0.8)';
+      ctx.shadowBlur = 10;
+      const lineHeight = fontSize * 0.82;
+      const blockHeight = (lines.length - 1) * lineHeight;
+      lines.forEach((line, lineIndex) => {
+        ctx.fillText(line, 0, lineIndex * lineHeight - blockHeight / 2);
+      });
       ctx.filter = 'none';
       if ('letterSpacing' in ctx) ctx.letterSpacing = 'normal';
       ctx.restore();

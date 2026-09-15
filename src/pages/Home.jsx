@@ -85,7 +85,7 @@ export default function Home() {
     flowArrows: true,
     motionText: '',
     motionBgColor: '#FFEB00',
-    motionSpeed: 1,
+    motionSpeed: 0.7,
     hookBoost: false,
     ctaEnabled: false,
     ctaText: 'Follow for Part 2',
