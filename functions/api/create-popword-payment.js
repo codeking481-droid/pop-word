@@ -1,5 +1,3 @@
-const TEST_PLAN = 'PLN_hjzusad1jus87lw';
-
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -12,7 +10,9 @@ export async function onRequestPost({ request, env }) {
   const supabaseUrl = env.SUPABASE_URL || env.VITE_SUPABASE_URL;
   const anonKey = env.SUPABASE_ANON_KEY || env.VITE_SUPABASE_ANON_KEY;
   const accessToken = request.headers.get('Authorization')?.replace(/^Bearer\s+/i, '');
-  if (!secret || !supabaseUrl || !anonKey) return json({ error: 'Payment is not configured' }, 500);
+  if (!secret || !supabaseUrl || !anonKey || !env.PAYSTACK_PLAN_CODE) {
+    return json({ error: 'Payment is not configured' }, 500);
+  }
 
   let body;
   try {
@@ -42,7 +42,7 @@ export async function onRequestPost({ request, env }) {
     },
     body: JSON.stringify({
       email,
-      plan: env.PAYSTACK_PLAN_CODE || TEST_PLAN,
+      plan: env.PAYSTACK_PLAN_CODE,
       callback_url: `${origin}/payment-success`,
       metadata: { product: 'PopWord Pro Monthly' },
     }),

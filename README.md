@@ -33,7 +33,7 @@ the authenticated account for 30 days.
 Set these Cloudflare Pages **Production** variables and secrets:
 
 - `PAYSTACK_SECRET_KEY` (Secret; use the matching test or live key)
-- `PAYSTACK_PLAN_CODE` (optional; defaults to the PopWord test plan)
+- `PAYSTACK_PLAN_CODE` (set to `PLN_w7htm2j67axsrv9` for the live PopWord plan)
 - `SUPABASE_SERVICE_ROLE_KEY` (Secret)
 - `SUPABASE_URL` (Plaintext URL)
 - `SUPABASE_ANON_KEY` (or the frontend `VITE_SUPABASE_ANON_KEY`)
