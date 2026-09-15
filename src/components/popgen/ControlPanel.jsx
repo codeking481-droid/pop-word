@@ -63,7 +63,7 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
 
   return (
     <div
-      className="relative flex h-full flex-col gap-6 overflow-y-auto p-5 lg:p-6"
+      className="relative flex h-full flex-col gap-5 overflow-y-auto p-4 lg:p-5"
       onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
       onDragLeave={(e) => { if (e.currentTarget === e.target) setDragging(false); }}
       onDrop={(e) => { e.preventDefault(); setDragging(false); handleFiles(e.dataTransfer.files); }}
@@ -103,17 +103,45 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
       ) : (
       <>
       {/* Script */}
-      <section>
-        <Label icon={<Sparkles className="h-4 w-4" />}>Your Script</Label>
+      <section className="rounded-2xl border border-[#00FF62]/35 bg-[#00FF62]/[0.06] p-3 shadow-[0_0_24px_-12px_rgba(0,255,98,0.65)]">
+        <Label icon={<Sparkles className="h-4 w-4 text-[#00FF62]" />}>Your Script</Label>
         <textarea
           value={options.script}
           onChange={(e) => update({ script: e.target.value })}
           placeholder="Paste your full script here..."
-          className="h-40 w-full resize-none rounded-2xl border border-white/10 bg-black/40 p-4 text-sm leading-relaxed text-white placeholder:text-white/30 outline-none transition focus:border-[#00FF62]/60 focus:ring-2 focus:ring-[#00FF62]/20"
+          className="h-44 w-full resize-y rounded-xl border border-[#00FF62]/35 bg-[#07130d] p-4 text-sm leading-relaxed text-white placeholder:text-white/40 outline-none transition focus:border-[#00FF62] focus:ring-2 focus:ring-[#00FF62]/25"
         />
         <div className="mt-1.5 text-right text-xs text-white/40">
           {options.script.trim() ? options.script.trim().split(/\s+/).filter(Boolean).length : 0} words
         </div>
+      </section>
+
+      <section className="rounded-2xl border border-[#00FF62]/35 bg-[#00FF62]/[0.06] p-3 shadow-[0_0_24px_-12px_rgba(0,255,98,0.65)]">
+        <Label>Animation Style</Label>
+        <select
+          value={options.animation}
+          onChange={(e) => update({ animation: e.target.value })}
+          className="w-full rounded-xl border border-[#00FF62]/35 bg-[#07130d] px-3 py-3 text-sm font-semibold text-white outline-none transition focus:border-[#00FF62] focus:ring-2 focus:ring-[#00FF62]/25"
+        >
+          {ANIMATIONS.map((a) => (
+            <option key={a} value={a} className="bg-[#121212]">{a}</option>
+          ))}
+        </select>
+        {options.animation === 'Motion Typography' && (
+          <select
+            value={options.motionDirection || 'mixed'}
+            onChange={(e) => update({ motionDirection: e.target.value })}
+            className="mt-2 w-full rounded-xl border border-white/15 bg-black/40 px-3 py-2.5 text-xs text-white outline-none focus:border-[#00FF62]/60"
+            aria-label="Motion direction"
+          >
+            <option value="mixed">Mixed (up, down, left, right)</option>
+            <option value="up">Up</option>
+            <option value="down">Down</option>
+            <option value="left">Left</option>
+            <option value="right">Right</option>
+            <option value="zoom">Zoom</option>
+          </select>
+        )}
       </section>
 
       {/* Aspect ratio */}
@@ -243,36 +271,6 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
               </div>
             </Field>
           </div>
-
-          <Field label="Animation">
-            <select
-              value={options.animation}
-              onChange={(e) => update({ animation: e.target.value })}
-              className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2.5 text-sm text-white outline-none transition focus:border-[#00FF62]/60"
-            >
-              {ANIMATIONS.map((a) => (
-                <option key={a} value={a} className="bg-[#121212]">
-                  {a}
-                </option>
-              ))}
-            </select>
-          </Field>
-          {options.animation === 'Motion Typography' && (
-            <Field label="Motion direction">
-              <select
-                value={options.motionDirection || 'mixed'}
-                onChange={(e) => update({ motionDirection: e.target.value })}
-                className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2.5 text-sm text-white outline-none transition focus:border-[#00FF62]/60"
-              >
-                <option value="mixed">Mixed (up, down, left, right)</option>
-                <option value="up">Up</option>
-                <option value="down">Down</option>
-                <option value="left">Left</option>
-                <option value="right">Right</option>
-                <option value="zoom">Zoom</option>
-              </select>
-            </Field>
-          )}
 
           <Field label={`Word Duration — ${options.wordDuration.toFixed(2)}s`}>
             <input
