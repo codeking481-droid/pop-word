@@ -191,6 +191,28 @@ export default function Home() {
     return { r, dur };
   };
 
+  const reserveTrialExport = async () => {
+    if (isPro) return true;
+    const used = Number(subscription?.download_count) || 0;
+    if (used >= 3) {
+      toast.error('Your 3 trial exports are used. Upgrade to export more videos.');
+      return false;
+    }
+    const nextCount = used + 1;
+    const { data, error } = await supabase
+      .from('subscriptions')
+      .update({ download_count: nextCount })
+      .eq('user_id', user.id)
+      .select('download_count')
+      .maybeSingle();
+    if (error || !data) {
+      toast.error(error?.message || 'Could not update your trial export count');
+      return false;
+    }
+    setSubscription((current) => ({ ...current, download_count: data.download_count }));
+    return true;
+  };
+
   const addMedia = (files) => {
     const items = files.map((file) => {
       const isVideo = file.type.startsWith('video');
@@ -246,6 +268,7 @@ export default function Home() {
   const handleGenerate = async () => {
     const ctx = ensureScript();
     if (!ctx) return;
+    if (!(await reserveTrialExport())) return;
     setExporting({ type: 'MP4', progress: 0 });
     try {
       const blob = await recordVideo(ctx.r, {
@@ -281,6 +304,7 @@ export default function Home() {
           setBatchProgress({ current: i + 1, total: scripts.length });
           continue;
         }
+        if (!(await reserveTrialExport())) break;
         try {
           const blob = await recordVideo(renderer, {
             duration: dur,
@@ -314,6 +338,7 @@ export default function Home() {
         r.setOptions({ aspect: a });
         const dur = r.getDuration();
         if (dur <= 0 || !r.hasContent()) continue;
+        if (!(await reserveTrialExport())) break;
         try {
           const blob = await recordVideo(r, { duration: dur, onProgress: () => {} });
           downloadBlob(blob, `popword-${a.replace(':', 'x')}.${blob.type.includes('mp4') ? 'mp4' : 'webm'}`);

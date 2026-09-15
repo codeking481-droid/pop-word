@@ -22,6 +22,10 @@ npm run build
 
 The production output is written to `dist/`.
 
+Signed-in users receive exactly three trial video exports. Each successful
+single, batch, or multi-format export consumes one trial export. Once
+`download_count` reaches 3, further exports require an active Pro subscription.
+
 ## Paystack Pro activation
 
 The Upgrade button starts a Paystack transaction through the Cloudflare Pages
