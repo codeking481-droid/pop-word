@@ -101,9 +101,9 @@ export default function PreviewPanel({ options, onReady, onExportVideo, exportin
   const showNotch = aspect === '9:16';
 
   return (
-    <div className="flex h-full flex-col items-center gap-4 overflow-y-auto p-5 lg:p-6">
+    <div className="flex h-full min-w-0 flex-col items-center gap-4 overflow-y-auto p-3 sm:p-5 lg:p-6">
       {/* Device frame */}
-      <div className="relative mx-auto" style={{ width: frameWidth }}>
+      <div className="relative mx-auto w-full max-w-full" style={{ width: frameWidth }}>
         <div className="relative rounded-[2.2rem] border-[10px] border-[#1c1c1c] bg-black shadow-[0_0_60px_-10px_rgba(0,255,98,0.25),0_25px_50px_-12px_rgba(0,0,0,0.8)]">
           {showNotch && (
             <div className="absolute left-1/2 top-0 z-10 h-6 w-28 -translate-x-1/2 rounded-b-2xl bg-[#1c1c1c]" />

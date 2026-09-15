@@ -420,7 +420,7 @@ export default function Home() {
     <div className="min-h-screen bg-[#0A0A0A] text-white">
       {/* Header */}
       <header className="sticky top-0 z-20 border-b border-white/10 bg-[#0A0A0A]/80 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-[1500px] items-center justify-between px-5 py-3.5 lg:px-8">
+        <div className="mx-auto flex max-w-[1500px] flex-wrap items-center justify-between gap-2 px-3 py-3 sm:px-5 lg:px-8 lg:py-3.5">
           <div className="flex items-center gap-2.5">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#00FF62] text-black shadow-[0_0_20px_-4px_rgba(0,255,98,0.7)]">
               <Zap className="h-5 w-5" fill="black" />
@@ -452,8 +452,8 @@ export default function Home() {
       </header>
 
       {/* Main */}
-      <main className="mx-auto min-w-0 max-w-[1500px] overflow-x-hidden px-5 py-5 lg:px-8 lg:py-6">
-        <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)] xl:gap-6">
+      <main className="mx-auto min-w-0 max-w-[1500px] overflow-x-hidden px-3 py-3 sm:px-5 lg:px-8 lg:py-6">
+        <div className="grid min-w-0 gap-3 sm:gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)] xl:gap-6">
           {/* Control panel */}
           <div className="order-2 min-w-0 rounded-3xl border border-white/10 bg-white/[0.03] backdrop-blur-xl lg:order-1">
             <ControlPanel

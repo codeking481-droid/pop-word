@@ -131,12 +131,11 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
 
       <section className="rounded-2xl border border-[#00FF62]/35 bg-[#00FF62]/[0.06] p-3 shadow-[0_0_24px_-12px_rgba(0,255,98,0.65)]">
         <Label>Choose Styles to Combine (tick many)</Label>
-        <p className="mb-2 text-[11px] text-white/45">{isPro ? 'Pro: use all 8 styles' : 'Free: choose up to 3 styles'}</p>
+        <p className="mb-2 text-[11px] text-white/45">{isPro ? 'Pro: use all 8 styles' : 'Select any styles to build your rotation'}</p>
         <div className="space-y-1.5">
           {COMBINE_STYLES.map((style) => {
             const selected = (options.selectedStyles || ['pop']).includes(style.id);
-            const maxTicks = isPro ? 8 : 3;
-            const disabled = selected ? false : (options.selectedStyles || ['pop']).length >= maxTicks;
+            const disabled = false;
             return (
               <label key={style.id} className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 ${disabled ? 'border-white/10 opacity-45' : selected ? 'border-[#00FF62]/60 bg-[#00FF62]/10' : 'border-white/10 bg-black/20'}`}>
                 <input
