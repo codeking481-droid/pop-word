@@ -420,7 +420,7 @@ export default function Home() {
     <div className="min-h-screen bg-[#0A0A0A] text-white">
       {/* Header */}
       <header className="sticky top-0 z-20 border-b border-white/10 bg-[#0A0A0A]/80 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-[1500px] flex-wrap items-center justify-between gap-2 px-3 py-3 sm:px-5 lg:px-8 lg:py-3.5">
+        <div className="mx-auto flex max-w-[1500px] flex-wrap items-center justify-between gap-2 px-2.5 py-2.5 sm:px-5 lg:px-8 lg:py-3.5">
           <div className="flex items-center gap-2.5">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#00FF62] text-black shadow-[0_0_20px_-4px_rgba(0,255,98,0.7)]">
               <Zap className="h-5 w-5" fill="black" />
@@ -432,7 +432,7 @@ export default function Home() {
           </div>
           <div className="flex items-center gap-3">
             {isSupabaseConfigured && user ? (
-              <div className="flex items-center gap-2">
+              <div className="flex max-w-full flex-wrap items-center justify-end gap-1.5 sm:gap-2">
                 <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-semibold text-white/55">
                   {isPro ? 'Pro' : `${trialRemaining} trial export${trialRemaining === 1 ? '' : 's'} left`}
                 </span>
@@ -441,7 +441,7 @@ export default function Home() {
                     <button type="button" onClick={handleUpgrade} disabled={upgradeLoading} title="Approximate USD display; checkout is charged in NGN" className="rounded-full bg-[#00FF62] px-3 py-1 text-[11px] font-bold text-black transition hover:bg-[#66ff9a] disabled:cursor-wait disabled:opacity-60">{upgradeLoading ? 'Opening...' : 'Upgrade — $2/mo'}</button>
                   </div>
                 )}
-                <span className="max-w-[180px] truncate text-xs text-white/55">{user.email}</span>
+                <span className="hidden max-w-[180px] truncate text-xs text-white/55 sm:inline">{user.email}</span>
                 <button type="button" onClick={handleSignOut} aria-label="Sign out" className="rounded-full p-1.5 text-white/55 transition hover:bg-white/10 hover:text-white">
                   <LogOut className="h-3.5 w-3.5" />
                 </button>
@@ -455,7 +455,7 @@ export default function Home() {
       <main className="mx-auto min-w-0 max-w-[1500px] overflow-x-hidden px-3 py-3 sm:px-5 lg:px-8 lg:py-6">
         <div className="grid min-w-0 gap-3 sm:gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)] xl:gap-6">
           {/* Control panel */}
-          <div className="order-2 min-w-0 rounded-3xl border border-white/10 bg-white/[0.03] backdrop-blur-xl lg:order-1">
+          <div className="order-2 min-w-0 rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-xl sm:rounded-3xl lg:order-1">
             <ControlPanel
               options={options}
               isPro={isPro}
@@ -475,7 +475,7 @@ export default function Home() {
             />
           </div>
           {/* Preview panel */}
-          <div className="order-1 min-w-0 rounded-3xl border border-white/10 bg-gradient-to-b from-white/[0.05] to-transparent backdrop-blur-xl lg:order-2">
+          <div className="order-1 min-w-0 rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.05] to-transparent backdrop-blur-xl sm:rounded-3xl lg:order-2">
             <PreviewPanel
               options={options}
               onReady={(r) => (rendererRef.current = r)}

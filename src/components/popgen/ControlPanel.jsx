@@ -76,7 +76,7 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
 
   return (
     <div
-      className="relative flex h-full flex-col gap-5 overflow-y-auto p-4 lg:p-5"
+      className="relative flex h-full min-w-0 flex-col gap-4 overflow-y-auto p-3 sm:gap-5 sm:p-4 lg:p-5"
       onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
       onDragLeave={(e) => { if (e.currentTarget === e.target) setDragging(false); }}
       onDrop={(e) => { e.preventDefault(); setDragging(false); handleFiles(e.dataTransfer.files); }}
@@ -122,7 +122,7 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
           value={options.script}
           onChange={(e) => update({ script: e.target.value })}
           placeholder="Paste your full script here..."
-          className="h-44 w-full resize-y rounded-xl border border-[#00FF62]/35 bg-[#07130d] p-4 text-sm leading-relaxed text-white placeholder:text-white/40 outline-none transition focus:border-[#00FF62] focus:ring-2 focus:ring-[#00FF62]/25"
+          className="h-40 min-h-[9rem] w-full resize-y rounded-xl border border-[#00FF62]/35 bg-[#07130d] p-3 text-sm leading-relaxed text-white placeholder:text-white/40 outline-none transition focus:border-[#00FF62] focus:ring-2 focus:ring-[#00FF62]/25 sm:h-44 sm:p-4"
         />
         <div className="mt-1.5 text-right text-xs text-white/40">
           {options.script.trim() ? options.script.trim().split(/\s+/).filter(Boolean).length : 0} words
