@@ -191,13 +191,19 @@ export default function Home() {
     return { r, dur };
   };
 
-  const reserveTrialExport = async () => {
+  const canTrialExport = () => {
     if (isPro) return true;
     const used = Number(subscription?.download_count) || 0;
     if (used >= 3) {
       toast.error('Your 3 trial exports are used. Upgrade to export more videos.');
       return false;
     }
+    return true;
+  };
+
+  const recordTrialExport = async () => {
+    if (isPro) return true;
+    const used = Number(subscription?.download_count) || 0;
     const nextCount = used + 1;
     const { data, error } = await supabase
       .from('subscriptions')
@@ -268,7 +274,7 @@ export default function Home() {
   const handleGenerate = async () => {
     const ctx = ensureScript();
     if (!ctx) return;
-    if (!(await reserveTrialExport())) return;
+    if (!canTrialExport()) return;
     setExporting({ type: 'MP4', progress: 0 });
     try {
       const blob = await recordVideo(ctx.r, {
@@ -276,6 +282,7 @@ export default function Home() {
         onProgress: (p) => setExporting({ type: 'MP4', progress: p }),
       });
       downloadBlob(blob, 'popup-video.' + (blob.type.includes('mp4') ? 'mp4' : 'webm'));
+      await recordTrialExport();
       toast.success('Video ready!');
     } catch (e) {
       toast.error(e?.message || 'Recording failed');
@@ -304,13 +311,14 @@ export default function Home() {
           setBatchProgress({ current: i + 1, total: scripts.length });
           continue;
         }
-        if (!(await reserveTrialExport())) break;
+        if (!canTrialExport()) break;
         try {
           const blob = await recordVideo(renderer, {
             duration: dur,
             onProgress: () => {},
           });
           downloadBlob(blob, `popword-${i + 1}.${blob.type.includes('mp4') ? 'mp4' : 'webm'}`);
+          await recordTrialExport();
         } catch (e) {
           toast.error(`Video ${i + 1} failed${e?.message ? `: ${e.message}` : ''}`);
         }
@@ -338,10 +346,11 @@ export default function Home() {
         r.setOptions({ aspect: a });
         const dur = r.getDuration();
         if (dur <= 0 || !r.hasContent()) continue;
-        if (!(await reserveTrialExport())) break;
+        if (!canTrialExport()) break;
         try {
           const blob = await recordVideo(r, { duration: dur, onProgress: () => {} });
           downloadBlob(blob, `popword-${a.replace(':', 'x')}.${blob.type.includes('mp4') ? 'mp4' : 'webm'}`);
+          await recordTrialExport();
           completed.push(a);
         } catch (e) {
           toast.error(`${a} export failed${e?.message ? `: ${e.message}` : ''}`);
