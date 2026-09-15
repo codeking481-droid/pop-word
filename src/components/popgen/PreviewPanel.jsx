@@ -44,6 +44,17 @@ export default function PreviewPanel({ options, onReady, onExportVideo, exportin
   }, []); // renderer lifecycle is intentionally tied to the canvas
 
   useEffect(() => {
+    const handleVisibility = () => {
+      const renderer = rendererRef.current;
+      if (!renderer) return;
+      if (document.visibilityState === 'hidden') renderer.pause();
+      else if (playing) renderer.play();
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, [playing]);
+
+  useEffect(() => {
     const r = rendererRef.current;
     if (r) r.setOptions(options);
   }, [options]);

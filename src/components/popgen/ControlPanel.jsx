@@ -47,7 +47,7 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
   const [tab, setTab] = useState(options.template || 'pop');
   const busy = !!exporting;
 
-  const update = (patch) => setOptions({ ...options, ...patch });
+  const update = (patch) => setOptions((current) => ({ ...current, ...patch }));
 
   const openPicker = () => fileRef.current?.click();
 

@@ -19,6 +19,8 @@ export default function Home() {
   const [subscription, setSubscription] = useState(null);
   const [signupDismissed, setSignupDismissed] = useState(false);
   const [upgradeLoading, setUpgradeLoading] = useState(false);
+  const userRef = useRef(null);
+  userRef.current = user;
 
   const loadSubscription = async (userId, email) => {
     const [{ data, error }, { data: profile, error: profileError }] = await Promise.all([
@@ -112,7 +114,8 @@ export default function Home() {
       }
     });
     const refreshOnReturn = () => {
-      if (document.visibilityState === 'visible' && user) loadSubscription(user.id, user.email);
+      const currentUser = userRef.current;
+      if (document.visibilityState === 'visible' && currentUser) loadSubscription(currentUser.id, currentUser.email);
     };
     document.addEventListener('visibilitychange', refreshOnReturn);
     return () => {
@@ -120,7 +123,7 @@ export default function Home() {
       listener.subscription.unsubscribe();
       document.removeEventListener('visibilitychange', refreshOnReturn);
     };
-  }, [user]);
+  }, []);
 
   const handleSignOut = async () => {
     if (!supabase) return;

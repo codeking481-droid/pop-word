@@ -26,6 +26,7 @@ export default class PopRenderer {
     this.speed = 1;
     this.playing = false;
     this.raf = null;
+    this.lastFrameTime = 0;
     this.startTime = 0;
     this.pausedAt = 0;
     this.customMedia = null;
@@ -154,6 +155,7 @@ export default class PopRenderer {
     if (this.playing) return;
     if (this.customMedia && this.customMedia.tagName === 'VIDEO') this.customMedia.play().catch(() => {});
     this.playing = true;
+    this.lastFrameTime = 0;
     this.startTime = performance.now() - (this.pausedAt * 1000) / this.speed;
     this._loop();
   }
@@ -212,6 +214,12 @@ export default class PopRenderer {
 
   _loop = () => {
     if (!this.playing) return;
+    const now = performance.now();
+    if (this.lastFrameTime && now - this.lastFrameTime < 33) {
+      this.raf = requestAnimationFrame(this._loop);
+      return;
+    }
+    this.lastFrameTime = now;
     let t = this.currentTime;
     const dur = this.getDuration();
     if (dur > 0 && t >= dur) { t = 0; this.startTime = performance.now(); this.pausedAt = 0; }
