@@ -387,7 +387,12 @@ export default function Home() {
                 <span className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] font-semibold text-white/55">
                   {isPro ? 'Pro' : `${trialRemaining} trial export${trialRemaining === 1 ? '' : 's'} left`}
                 </span>
-                {!isPro && <button type="button" onClick={handleUpgrade} disabled={upgradeLoading} className="rounded-full bg-[#00FF62] px-2.5 py-1 text-[11px] font-bold text-black transition hover:bg-[#66ff9a] disabled:cursor-wait disabled:opacity-60">{upgradeLoading ? 'Opening...' : 'Upgrade'}</button>}
+                {!isPro && (
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] font-semibold text-white/50" title="Approximate USD display; checkout is charged in NGN">~$2/mo</span>
+                    <button type="button" onClick={handleUpgrade} disabled={upgradeLoading} className="rounded-full bg-[#00FF62] px-2.5 py-1 text-[11px] font-bold text-black transition hover:bg-[#66ff9a] disabled:cursor-wait disabled:opacity-60">{upgradeLoading ? 'Opening...' : 'Upgrade'}</button>
+                  </div>
+                )}
                 <span className="max-w-[180px] truncate text-xs text-white/55">{user.email}</span>
                 <button type="button" onClick={handleSignOut} aria-label="Sign out" className="rounded-full p-1.5 text-white/55 transition hover:bg-white/10 hover:text-white">
                   <LogOut className="h-3.5 w-3.5" />

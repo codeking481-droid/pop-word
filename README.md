@@ -50,6 +50,10 @@ The payment callback is:
 
 `https://pop-word.pages.dev/payment-success`
 
+The editor displays the live plan as approximately `$2/month` beside Upgrade.
+Paystack charges the configured plan currency and amount (currently NGN 3,000);
+the label is only a convenience USD estimate.
+
 Never expose `PAYSTACK_SECRET_KEY` or `SUPABASE_SERVICE_ROLE_KEY` in Vite or
 browser code.
 
