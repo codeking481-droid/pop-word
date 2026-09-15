@@ -33,10 +33,11 @@ For picture-in-picture captions, enable **Transparent BG (PiP for CapCut)**.
 The editor exports a VP9 WebM with a transparent canvas when the browser
 supports it; import that file as an overlay in CapCut or InShot.
 
-The **Motion Typography Smooth** template creates large yellow-background
-typography with alternating black/blue phrase emphasis and smooth stacked
-enter/exit motion. Add phrases on separate lines for exact timing, or enter a
-longer sentence and it will split into three-word chunks automatically.
+The **Motion Typography Smooth** template defaults to `#FFEB00` with large,
+tight typography, alternating black/blue phrase emphasis, and smooth stacked
+enter/exit motion. Its background can be changed with the color controls. Add
+phrases on separate lines for exact timing, or enter a longer sentence and it
+will split into punctuation and two-word meaning chunks automatically.
 
 ## Paystack Pro activation
 
