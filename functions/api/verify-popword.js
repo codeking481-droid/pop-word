@@ -1,6 +1,3 @@
-const TEST_PLAN = 'PLN_hjzusad1jus87lw';
-const LIVE_PLAN = 'PLN_w7htm2j67axsrv9';
-
 function json(body, status = 200) {
   return new Response(JSON.stringify(body), {
     status,
@@ -52,7 +49,9 @@ export async function onRequestGet({ request, env }) {
   const params = new URL(request.url).searchParams;
   const reference = params.get('reference')?.trim();
   const requestedEmail = params.get('email')?.trim().toLowerCase();
-  if (!env.PAYSTACK_SECRET_KEY || !supabaseUrl || !serviceKey || !anonKey) return json({ error: 'Verification is not configured' }, 500);
+  if (!env.PAYSTACK_SECRET_KEY || !env.PAYSTACK_PLAN_CODE || !supabaseUrl || !serviceKey || !anonKey) {
+    return json({ error: 'Verification is not configured' }, 500);
+  }
   if (!accessToken || !reference || !requestedEmail) return json({ error: 'Authentication and payment reference are required' }, 400);
 
   const authResponse = await fetch(`${supabaseUrl}/auth/v1/user`, {
@@ -70,8 +69,9 @@ export async function onRequestGet({ request, env }) {
   const payment = verification?.data;
   if (!verifyResponse.ok || !verification?.status || payment?.status !== 'success') return json({ error: 'Paystack verification failed' }, 400);
   if (payment.customer?.email?.trim().toLowerCase() !== authenticatedEmail) return json({ error: 'Payment email does not match account email' }, 403);
-  const acceptedPlans = [env.PAYSTACK_PLAN_CODE, TEST_PLAN, LIVE_PLAN].filter(Boolean);
-  if (!acceptedPlans.includes(payment.plan) && ![300000, 3000].includes(payment.amount)) return json({ error: 'Payment is not for PopWord Pro' }, 400);
+  if (payment.plan !== env.PAYSTACK_PLAN_CODE || payment.amount !== 300000 || payment.currency !== 'NGN') {
+    return json({ error: 'Payment is not for the configured PopWord plan' }, 400);
+  }
 
   try {
     await patchSubscription(supabaseUrl, serviceKey, userId, authenticatedEmail, {
