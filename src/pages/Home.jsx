@@ -18,6 +18,7 @@ export default function Home() {
   const [authError, setAuthError] = useState('');
   const [subscription, setSubscription] = useState(null);
   const [upgradeLoading, setUpgradeLoading] = useState(false);
+  const downloadCountRef = useRef(null);
   const userRef = useRef(null);
   userRef.current = user;
 
@@ -34,10 +35,13 @@ export default function Home() {
     ]);
     if (error && profileError) {
       setAuthError(`Account status unavailable: ${error.message}`);
-      setSubscription({ download_count: 0 });
+      downloadCountRef.current = null;
+      setSubscription(null);
       return;
     }
-    setSubscription({ ...(data || {}), ...(profile || {}), download_count: data?.download_count || 0 });
+    const downloadCount = Number.isFinite(Number(data?.download_count)) ? Number(data.download_count) : 0;
+    downloadCountRef.current = downloadCount;
+    setSubscription({ ...(data || {}), ...(profile || {}), download_count: downloadCount });
   };
 
   const [options, setOptions] = useState({
@@ -109,6 +113,7 @@ export default function Home() {
       setAuthLoading(false);
       if (session?.user) loadSubscription(session.user.id, session.user.email);
       else {
+        downloadCountRef.current = null;
         setSubscription(null);
       }
     });
@@ -194,7 +199,11 @@ export default function Home() {
 
   const canTrialExport = () => {
     if (isPro) return true;
-    const used = Number(subscription?.download_count) || 0;
+    if (downloadCountRef.current === null) {
+      toast.error('Account status is still loading. Please try again.');
+      return false;
+    }
+    const used = downloadCountRef.current;
     if (used >= 3) {
       toast.error('Your 3 trial exports are used. Upgrade to export more videos.');
       return false;
@@ -204,7 +213,8 @@ export default function Home() {
 
   const recordTrialExport = async () => {
     if (isPro) return true;
-    const used = Number(subscription?.download_count) || 0;
+    const used = downloadCountRef.current;
+    if (used === null || used >= 3) return false;
     const nextCount = used + 1;
     const { data, error } = await supabase
       .from('subscriptions')
@@ -212,11 +222,26 @@ export default function Home() {
       .eq('user_id', user.id)
       .select('download_count')
       .maybeSingle();
-    if (error || !data) {
-      toast.error(error?.message || 'Could not update your trial export count');
+    if (error) {
+      toast.error(error.message || 'Could not update your trial export count');
       return false;
     }
-    setSubscription((current) => ({ ...current, download_count: data.download_count }));
+    if (!data) {
+      const { data: created, error: createError } = await supabase
+        .from('subscriptions')
+        .insert({ user_id: user.id, email: user.email, download_count: nextCount })
+        .select('download_count')
+        .maybeSingle();
+      if (createError || !created) {
+        toast.error(createError?.message || 'Could not create your trial export count');
+        return false;
+      }
+      downloadCountRef.current = Number(created.download_count);
+      setSubscription((current) => ({ ...(current || {}), download_count: downloadCountRef.current }));
+      return true;
+    }
+    downloadCountRef.current = Number(data.download_count);
+    setSubscription((current) => ({ ...(current || {}), download_count: downloadCountRef.current }));
     return true;
   };
 
