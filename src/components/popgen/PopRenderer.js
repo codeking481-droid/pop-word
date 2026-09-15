@@ -342,7 +342,7 @@ export default class PopRenderer {
     const progress = Math.min(1, (time - index * step) / step);
     const renderItem = (itemIndex, itemProgress) => {
       const style = selected[itemIndex % selected.length];
-      if (['hormozi', 'imanGadzhi', 'mrbeast', 'liquidWarp', 'aestheticSerif'].includes(style)) {
+      if (['motionTypographySmooth', 'hormozi', 'imanGadzhi', 'mrbeast', 'liquidWarp', 'aestheticSerif'].includes(style)) {
         this._renderUniqueChunk(chunks[itemIndex], itemProgress, style);
         return;
       }
@@ -367,7 +367,7 @@ export default class PopRenderer {
     const enter = Math.min(1, Math.max(0, progress / 0.35));
     const eased = 1 - ((1 - enter) ** 3);
     const y = (1 - eased) * H * 0.18;
-    const scale = style === 'mrbeast' ? 0.85 + eased * 0.35 : 0.94 + eased * 0.06;
+    const scale = style === 'mrbeast' || style === 'motionTypographySmooth' ? 0.85 + eased * 0.35 : 0.94 + eased * 0.06;
     ctx.save();
     ctx.translate(W / 2, H / 2 + y);
     ctx.scale(scale, scale);
@@ -377,6 +377,14 @@ export default class PopRenderer {
     ctx.lineJoin = 'round';
     ctx.letterSpacing = style === 'aestheticSerif' ? '-0.03em' : '-0.04em';
     if (style === 'imanGadzhi') ctx.rotate(-0.052);
+    if (style === 'motionTypographySmooth') {
+      ctx.fillStyle = words.some((word) => word.length > 6) ? '#4E3DFF' : '#000000';
+      ctx.shadowColor = 'rgba(255,255,255,0.75)';
+      ctx.shadowBlur = 8;
+      ctx.fillText(text, 0, 0);
+      ctx.restore();
+      return;
+    }
     if (style === 'hormozi' || style === 'mrbeast') {
       ctx.fillStyle = style === 'mrbeast' ? '#FFD600' : '#FFFFFF';
       ctx.strokeStyle = '#000000';
