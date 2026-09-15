@@ -26,6 +26,7 @@ const ANIMATIONS = [
   'Fade Up',
   'Word Highlight',
   'Caption Style',
+  'Motion Typography',
 ];
 const ASPECTS = [
   { id: '9:16', label: '9:16', hint: 'Vertical' },
@@ -80,7 +81,6 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
           { id: 'pop', label: 'POP' },
           { id: 'minimal', label: 'MINIMAL' },
           { id: 'flow', label: 'FLOW' },
-          { id: 'motion', label: 'MOTION TYPE' },
         ].map((t) => (
           <button
             key={t.id}
@@ -104,7 +104,6 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
       <>
       {tab === 'minimal' && <MinimalControls options={options} update={update} />}
       {tab === 'flow' && <FlowControls options={options} update={update} />}
-      {tab === 'motion' && <MotionControls options={options} update={update} />}
       {/* Script */}
       {tab === 'pop' && <section>
         <Label icon={<Sparkles className="h-4 w-4" />}>Your Script</Label>
@@ -260,6 +259,22 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
               ))}
             </select>
           </Field>
+          {options.animation === 'Motion Typography' && (
+            <Field label="Motion direction">
+              <select
+                value={options.motionDirection || 'mixed'}
+                onChange={(e) => update({ motionDirection: e.target.value })}
+                className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2.5 text-sm text-white outline-none transition focus:border-[#00FF62]/60"
+              >
+                <option value="mixed">Mixed (up, down, left, right)</option>
+                <option value="up">Up</option>
+                <option value="down">Down</option>
+                <option value="left">Left</option>
+                <option value="right">Right</option>
+                <option value="zoom">Zoom</option>
+              </select>
+            </Field>
+          )}
 
           <Field label={`Word Duration — ${options.wordDuration.toFixed(2)}s`}>
             <input
@@ -506,35 +521,6 @@ function FlowControls({ options, update }) {
         <input value={options.flowMessage || ''} onChange={(e) => update({ flowMessage: e.target.value })} placeholder="Keep going →" className="w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2.5 text-sm text-white placeholder:text-white/30" />
       </Field>
       <ToggleRow label="Animated arrow effect" on={options.flowArrows !== false} onClick={() => update({ flowArrows: options.flowArrows === false })} />
-    </section>
-  );
-}
-
-function MotionControls({ options, update }) {
-  return (
-    <section className="space-y-3">
-      <Label>Motion Typography Smooth</Label>
-      <p className="text-xs leading-relaxed text-white/50">Stacked typography with smooth phrase replacement. Choose any background color, then add one phrase per line or use a longer sentence.</p>
-      <Field label="Background color">
-        <div className="flex flex-wrap items-center gap-2">
-          {['#FFEB00', '#FFFFFF', '#111111', '#2D4BFF', '#FF6B6B', '#7C3AED'].map((color) => (
-            <button key={color} type="button" onClick={() => update({ motionBgColor: color, background: 'solid', bgColor: color })} className={`h-8 w-8 rounded-full border-2 ${options.motionBgColor === color ? 'border-[#00FF62]' : 'border-white/20'}`} style={{ background: color }} aria-label={`Use ${color} background`} />
-          ))}
-          <input type="color" value={options.motionBgColor || '#FFEB00'} onChange={(e) => update({ motionBgColor: e.target.value, background: 'solid', bgColor: e.target.value })} className="h-8 w-10 cursor-pointer rounded border-0 bg-transparent p-0" aria-label="Custom motion background color" />
-        </div>
-      </Field>
-      <Field label={`Motion speed — ${(options.motionSpeed || 0.7).toFixed(2)}x`}>
-        <input type="range" min="0.25" max="2.5" step="0.05" value={options.motionSpeed || 0.7} onChange={(e) => update({ motionSpeed: Number(e.target.value) })} className="pop-range w-full" />
-        <div className="mt-1 flex justify-between text-[10px] text-white/35"><span>Slower</span><span>Faster</span></div>
-      </Field>
-      <Field label="Phrases">
-        <textarea
-          value={options.motionText || options.script || ''}
-          onChange={(e) => update({ motionText: e.target.value, script: e.target.value })}
-          placeholder="ever wanted to make something visually beautiful"
-          className="h-28 w-full resize-none rounded-xl border border-white/10 bg-black/40 px-3 py-2.5 text-sm text-white placeholder:text-white/30"
-        />
-      </Field>
     </section>
   );
 }

@@ -86,6 +86,7 @@ export default function Home() {
     motionText: '',
     motionBgColor: '#FFEB00',
     motionSpeed: 0.7,
+    motionDirection: 'mixed',
     hookBoost: false,
     ctaEnabled: false,
     ctaText: 'Follow for Part 2',

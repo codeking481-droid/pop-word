@@ -131,7 +131,7 @@ export default class PopRenderer {
 
   getDuration() {
     const template = this.options.template || this.options.mode;
-    if (template === 'motion') {
+    if (template === 'motion' || this.options.animation === 'Motion Typography') {
       const speed = Math.max(0.25, Number(this.options.motionSpeed) || 1);
       const baseDuration = Math.max(2, this._motionChunks().length * 0.72);
       return baseDuration / speed;
@@ -275,6 +275,7 @@ export default class PopRenderer {
     } else {
       this._drawBackground(t);
       if (this.options.mode === 'caption') this._renderCaptionMode(t);
+      else if (this.options.animation === 'Motion Typography') this._renderMotionTypographySmooth(t);
       else this._drawWord(t);
     }
     if (this.options.showProgressbar) this._drawProgressBar(t);
@@ -303,7 +304,7 @@ export default class PopRenderer {
     const { ctx, W, H, options } = this;
     if (options.transparentBg) {
       ctx.clearRect(0, 0, W, H);
-    } else if (options.background && options.background !== 'stars') {
+    } else if (options.animation === 'Motion Typography') {
       this._drawBackground(t);
     } else {
       ctx.fillStyle = options.motionBgColor || '#FFEB00';
@@ -326,20 +327,36 @@ export default class PopRenderer {
       const localSeconds = time - start;
       if (localSeconds < -durationPerChunk * overlap || localSeconds > durationPerChunk) return;
       let y = 0;
+      let x = 0;
       let scale = 1;
       let alpha = 1;
       let velocity = 0;
+      const direction = options.motionDirection === 'mixed'
+        ? ['up', 'right', 'down', 'left'][index % 4]
+        : (options.motionDirection || 'up');
+      const distance = Math.max(W, H) * 0.62;
+      const offset = (progress, sign = 1) => {
+        if (direction === 'left' || direction === 'right') return { x: (direction === 'left' ? -1 : 1) * progress * distance * sign, y: 0 };
+        if (direction === 'zoom') return { x: 0, y: 0 };
+        return { x: 0, y: (direction === 'up' ? -1 : 1) * progress * distance * sign };
+      };
       if (localSeconds < 0) {
         const progress = Math.min(1, Math.max(0, (localSeconds + durationPerChunk * overlap) / (durationPerChunk * overlap)));
         const eased = easeOutBack(progress);
-        y = (1 - eased) * H * 1.1;
+        const incoming = offset(1 - eased, -1);
+        y = incoming.y;
+        x = incoming.x;
         scale = 1.15 - eased * 0.15;
+        if (direction === 'zoom') scale = 0.72 + eased * 0.28;
         velocity = 1 - progress;
         alpha = progress;
       } else if (localSeconds > durationPerChunk - 0.38) {
         const progress = Math.min(1, (localSeconds - (durationPerChunk - 0.38)) / 0.38);
-        y = -progress * H * 1.1;
+        const outgoing = offset(progress, 1);
+        y = outgoing.y;
+        x = outgoing.x;
         scale = 1 - progress * 0.08;
+        if (direction === 'zoom') scale = 1 - progress * 0.15;
         velocity = progress;
         alpha = 1 - progress;
       }
@@ -371,7 +388,7 @@ export default class PopRenderer {
       }
       ctx.save();
       ctx.globalAlpha = alpha;
-      ctx.translate(W / 2, H / 2 + y);
+      ctx.translate(W / 2 + x, H / 2 + y);
       ctx.scale(scale, scale);
       if ('letterSpacing' in ctx) ctx.letterSpacing = '-0.05em';
       ctx.filter = velocity ? `blur(${Math.abs(velocity) * 0.3}px)` : 'none';
