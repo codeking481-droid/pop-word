@@ -321,14 +321,23 @@ export default class PopRenderer {
     if (options.transparentBg) {
       ctx.clearRect(0, 0, W, H);
     } else if (options.animation === 'Motion Typography') {
-      this._drawBackground(t);
+      const activeText = String(this._motionChunks()[Math.floor((t * Math.max(0.25, Number(options.motionSpeed) || 1)) / 0.432) % Math.max(1, this._motionChunks().length)] || '').toLowerCase();
+      const flipWords = ['that', 'looks', 'feels', 'professional', 'skill', 'instantly'];
+      const shouldFlip = flipWords.some((word) => activeText.includes(word));
+      const customBackground = options.background && !['stars', 'solid'].includes(options.background);
+      if (customBackground || options.background === 'solid' && options.bgColor && options.bgColor !== '#00C853') {
+        this._drawBackground(t);
+      } else {
+        ctx.fillStyle = shouldFlip ? '#0A0A0A' : '#FFEB00';
+        ctx.fillRect(0, 0, W, H);
+      }
     } else {
       ctx.fillStyle = options.motionBgColor || '#FFEB00';
       ctx.fillRect(0, 0, W, H);
     }
     const chunks = this._motionChunks();
     if (!chunks.length) return;
-    const speed = Math.max(0.25, Number(options.motionSpeed) || 1);
+    const speed = Math.max(0.25, Number(options.motionSpeed) || 0.7);
     const durationPerChunk = 0.72;
     const totalDuration = Math.max(2, chunks.length * durationPerChunk);
     const overlap = 0.4;
@@ -338,47 +347,39 @@ export default class PopRenderer {
       const c3 = overshoot + 1;
       return 1 + c3 * ((x - 1) ** 3) + overshoot * ((x - 1) ** 2);
     };
-    chunks.forEach((chunk, index) => {
-      const start = index * step;
-      const localSeconds = time - start;
-      if (localSeconds < -durationPerChunk * overlap || localSeconds > durationPerChunk) return;
-      let y = 0;
+    const activeIndex = Math.floor(time / step) % chunks.length;
+    const activeStart = activeIndex * step;
+    const activeProgress = (time - activeStart) / step;
+    const directionFor = (index) => options.motionDirection === 'mixed'
+      ? ['up', 'right', 'down', 'left'][index % 4]
+      : (options.motionDirection || 'up');
+    for (let slot = -2; slot <= 1; slot++) {
+      const index = (activeIndex + slot + chunks.length) % chunks.length;
+      const chunk = chunks[index];
+      const isCurrent = slot === 0;
+      const direction = directionFor(index);
+      const distance = Math.max(W, H) * 0.34;
+      const progress = Math.min(1, Math.max(0, activeProgress));
+      const eased = easeOutBack(progress);
       let x = 0;
-      let scale = 1;
-      let alpha = 1;
-      let velocity = 0;
-      const direction = options.motionDirection === 'mixed'
-        ? ['up', 'right', 'down', 'left'][index % 4]
-        : (options.motionDirection || 'up');
-      const distance = Math.max(W, H) * 0.62;
-      const offset = (progress, sign = 1) => {
-        if (direction === 'left' || direction === 'right') return { x: (direction === 'left' ? -1 : 1) * progress * distance * sign, y: 0 };
-        if (direction === 'zoom') return { x: 0, y: 0 };
-        return { x: 0, y: (direction === 'up' ? -1 : 1) * progress * distance * sign };
-      };
-      if (localSeconds < 0) {
-        const progress = Math.min(1, Math.max(0, (localSeconds + durationPerChunk * overlap) / (durationPerChunk * overlap)));
-        const eased = easeOutBack(progress);
-        const incoming = offset(1 - eased, -1);
-        y = incoming.y;
-        x = incoming.x;
-        scale = 1.15 - eased * 0.15;
-        if (direction === 'zoom') scale = 0.72 + eased * 0.28;
-        velocity = 1 - progress;
-        alpha = progress;
-      } else if (localSeconds > durationPerChunk - 0.38) {
-        const progress = Math.min(1, (localSeconds - (durationPerChunk - 0.38)) / 0.38);
-        const outgoing = offset(progress, 1);
-        y = outgoing.y;
-        x = outgoing.x;
-        scale = 1 - progress * 0.08;
-        if (direction === 'zoom') scale = 1 - progress * 0.15;
-        velocity = progress;
-        alpha = 1 - progress;
+      let y = slot * H * 0.16;
+      let scale = isCurrent ? 1.12 : 0.78;
+      let alpha = isCurrent ? 1 : 0.28;
+      if (isCurrent) {
+        if (direction === 'left') x = (1 - eased) * distance;
+        else if (direction === 'right') x = -(1 - eased) * distance;
+        else if (direction === 'down') y += -(1 - eased) * distance;
+        else if (direction === 'up') y += (1 - eased) * distance;
+        else scale = 0.8 + eased * 0.32;
+      } else if (slot === -1) {
+        y -= progress * H * 0.12;
       }
-      const emphasis = index % 2 === 1 || chunk.split(/\s+/).some((word) => word.length > 6);
-      const maxWidth = W * 0.92;
-      let fontSize = W * (chunk.length <= 15 ? 0.135 : 0.10);
+      const emphasisWords = ['beautiful', 'visually', 'looks', 'feels'];
+      const words = chunk.split(/\s+/);
+      const emphasis = index % 2 === 1 || words.some((word) => word.length > 6);
+      const italic = words.some((word) => emphasisWords.includes(word.toLowerCase().replace(/[^a-z]/g, '')));
+      const maxWidth = W * 1.1;
+      let fontSize = W * (isCurrent ? 0.16 : 0.075);
       ctx.font = `1000 ${fontSize}px Anton, Inter, ui-sans-serif, sans-serif`;
       const wrap = (value) => {
         const words = value.split(/\s+/).filter(Boolean);
@@ -397,7 +398,7 @@ export default class PopRenderer {
         return lines;
       };
       let lines = wrap(chunk);
-      while ((lines.length > 3 || lines.some((line) => ctx.measureText(line).width > maxWidth)) && fontSize > W * 0.055) {
+      while ((lines.length > 1 || lines.some((line) => ctx.measureText(line).width > maxWidth)) && fontSize > W * 0.055) {
         fontSize *= 0.94;
         ctx.font = `1000 ${fontSize}px Anton, Inter, ui-sans-serif, sans-serif`;
         lines = wrap(chunk);
@@ -406,9 +407,11 @@ export default class PopRenderer {
       ctx.globalAlpha = alpha;
       ctx.translate(W / 2 + x, H / 2 + y);
       ctx.scale(scale, scale);
+      if (italic) ctx.transform(1, 0, -0.14, 1, 0, 0);
       if ('letterSpacing' in ctx) ctx.letterSpacing = '-0.05em';
-      ctx.filter = velocity ? `blur(${Math.abs(velocity) * 0.3}px)` : 'none';
-      ctx.fillStyle = emphasis ? '#2D4BFF' : '#111111';
+      ctx.filter = isCurrent && progress < 0.25 ? `blur(${(1 - progress) * 0.8}px)` : 'none';
+      const flipText = ['that', 'looks', 'feels', 'professional', 'skill', 'instantly'].some((word) => chunk.toLowerCase().includes(word));
+      ctx.fillStyle = flipText ? (emphasis ? '#FFEB00' : '#FFFFFF') : (emphasis ? '#4E3DFF' : '#000000');
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.shadowColor = 'rgba(255,255,255,0.8)';
@@ -421,7 +424,7 @@ export default class PopRenderer {
       ctx.filter = 'none';
       if ('letterSpacing' in ctx) ctx.letterSpacing = 'normal';
       ctx.restore();
-    });
+    }
   }
 
   _drawCardText(text, x, y, maxW, fontSize, color = '#111827') {

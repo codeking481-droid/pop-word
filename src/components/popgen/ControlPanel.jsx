@@ -128,19 +128,34 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
           ))}
         </select>
         {options.animation === 'Motion Typography' && (
-          <select
-            value={options.motionDirection || 'mixed'}
-            onChange={(e) => update({ motionDirection: e.target.value })}
-            className="mt-2 w-full rounded-xl border border-white/15 bg-black/40 px-3 py-2.5 text-xs text-white outline-none focus:border-[#00FF62]/60"
-            aria-label="Motion direction"
-          >
-            <option value="mixed">Mixed (up, down, left, right)</option>
-            <option value="up">Up</option>
-            <option value="down">Down</option>
-            <option value="left">Left</option>
-            <option value="right">Right</option>
-            <option value="zoom">Zoom</option>
-          </select>
+          <div className="mt-2 space-y-2">
+            <select
+              value={options.motionDirection || 'mixed'}
+              onChange={(e) => update({ motionDirection: e.target.value })}
+              className="w-full rounded-xl border border-white/15 bg-black/40 px-3 py-2.5 text-xs text-white outline-none focus:border-[#00FF62]/60"
+              aria-label="Motion direction"
+            >
+              <option value="mixed">Mixed (up, down, left, right)</option>
+              <option value="up">Up</option>
+              <option value="down">Down</option>
+              <option value="left">Left</option>
+              <option value="right">Right</option>
+              <option value="zoom">Zoom</option>
+            </select>
+            <label className="block text-[11px] text-white/55">
+              Motion speed — {(options.motionSpeed || 0.7).toFixed(2)}x
+              <input
+                type="range"
+                min="0.25"
+                max="2.5"
+                step="0.05"
+                value={options.motionSpeed || 0.7}
+                onChange={(e) => update({ motionSpeed: Number(e.target.value) })}
+                className="pop-range mt-1 w-full"
+              />
+              <span className="flex justify-between text-[10px] text-white/30"><span>Slow</span><span>Fast</span></span>
+            </label>
+          </div>
         )}
       </section>
 
