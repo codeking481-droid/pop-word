@@ -17,7 +17,13 @@ export default function Home() {
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState('');
   const [subscription, setSubscription] = useState(null);
-  const [signupDismissed, setSignupDismissed] = useState(false);
+  const [signupDismissed, setSignupDismissed] = useState(() => {
+    try {
+      return window.localStorage.getItem('popword-signup-dismissed') === 'true';
+    } catch {
+      return false;
+    }
+  });
   const [upgradeLoading, setUpgradeLoading] = useState(false);
   const userRef = useRef(null);
   userRef.current = user;
@@ -110,7 +116,6 @@ export default function Home() {
       if (session?.user) loadSubscription(session.user.id, session.user.email);
       else {
         setSubscription(null);
-        setSignupDismissed(false);
       }
     });
     const refreshOnReturn = () => {
@@ -405,7 +410,14 @@ export default function Home() {
       {isSupabaseConfigured && authReady && !user && !signupDismissed && (
         <SignupGate
           onLogin={signIn}
-          onClose={() => setSignupDismissed(true)}
+          onClose={() => {
+            setSignupDismissed(true);
+            try {
+              window.localStorage.setItem('popword-signup-dismissed', 'true');
+            } catch {
+              // Continue without sign-in should still work if storage is unavailable.
+            }
+          }}
           loading={authLoading}
           error={authError}
         />
