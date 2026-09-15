@@ -22,33 +22,28 @@ npm run build
 
 The production output is written to `dist/`.
 
-## Gumroad Pro activation
+## Paystack Pro activation
 
-The Upgrade link opens the configured Gumroad product page. Gumroad should
-redirect successful payments to `/payment-success?license=...`. That page sends
-the license to the Cloudflare Pages Function, which verifies it server-side
-and activates Pro.
+The Upgrade button starts a Paystack transaction through the Cloudflare Pages
+Function `/api/create-popword-payment`. Paystack redirects successful payments
+to `/payment-success?reference=...`. That page sends the reference to
+`/api/verify-popword`, which verifies the transaction server-side and activates
+the authenticated account for 30 days.
 
 Set these Cloudflare Pages **Production** variables and secrets:
 
-- `GUMROAD_PRODUCT_ID` (set to `qyveh`)
-- `GUMROAD_ACCESS_TOKEN` (Secret; required for real license verification)
-- `GUMROAD_ALLOW_TEST_LICENSES` (set to `true` only for temporary `TEST-...`
-  testing when no Gumroad token is configured)
+- `PAYSTACK_SECRET_KEY` (Secret; use the matching test or live key)
+- `PAYSTACK_PLAN_CODE` (optional; defaults to the PopWord test plan)
 - `SUPABASE_SERVICE_ROLE_KEY` (Secret)
 - `SUPABASE_URL` (Plaintext URL)
+- `SUPABASE_ANON_KEY` (or the frontend `VITE_SUPABASE_ANON_KEY`)
 - `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` (frontend auth)
-- `VITE_GUMROAD_PAGE` (`https://coderking7.gumroad.com/l/qyveh`)
 
-Configure the Gumroad redirect URL as:
+The payment callback is:
 
 `https://pop-word.pages.dev/payment-success`
 
-The verification endpoint is:
-
-`https://pop-word.pages.dev/api/verify-popword`
-
-Never expose `GUMROAD_ACCESS_TOKEN` or `SUPABASE_SERVICE_ROLE_KEY` in Vite or
+Never expose `PAYSTACK_SECRET_KEY` or `SUPABASE_SERVICE_ROLE_KEY` in Vite or
 browser code.
 
 ## Cloudflare Pages

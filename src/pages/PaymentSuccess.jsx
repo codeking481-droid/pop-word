@@ -7,10 +7,9 @@ export default function PaymentSuccess() {
   const [state, setState] = useState({ status: 'loading', message: '' });
   const paymentParams = new URLSearchParams(window.location.search);
   const reference = paymentParams.get('reference') || paymentParams.get('trxref');
-  const license = paymentParams.get('license');
 
   const verifyPayment = async () => {
-    if ((!reference && !license) || !supabase) {
+    if (!reference || !supabase) {
       setState({ status: 'error', message: 'Payment reference or account session is missing.' });
       return;
     }
@@ -21,9 +20,7 @@ export default function PaymentSuccess() {
       setState({ status: 'error', message: 'Please sign in with the email used for payment, then try again.' });
       return;
     }
-    const query = new URLSearchParams({ email });
-    if (license) query.set('license', license);
-    else query.set('reference', reference);
+    const query = new URLSearchParams({ email, reference });
     const response = await fetch(`/api/verify-popword?${query.toString()}`, {
       headers: { Authorization: `Bearer ${session.access_token}` },
     });
