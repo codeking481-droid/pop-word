@@ -312,7 +312,7 @@ export default class PopRenderer {
   _renderMotionTypographySmooth(t) {
     const { ctx, W, H, options } = this;
     if (!options.transparentBg) {
-      ctx.fillStyle = '#FFEB3B';
+      ctx.fillStyle = options.motionBgColor || '#FFEB3B';
       ctx.fillRect(0, 0, W, H);
     }
     const chunks = this._motionChunks();

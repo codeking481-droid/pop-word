@@ -84,6 +84,7 @@ export default function Home() {
     flowMessage: 'Keep going',
     flowArrows: true,
     motionText: '',
+    motionBgColor: '#FFEB3B',
     hookBoost: false,
     ctaEnabled: false,
     ctaText: 'Follow for Part 2',
