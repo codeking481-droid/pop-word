@@ -50,7 +50,7 @@ export default function Home() {
     textColor: '#00FF62',
     font: 'Bold',
     animation: 'Pop',
-    selectedStyles: ['pop'],
+    selectedStyles: ['motionTypographySmooth', 'stackReplace'],
     wordDuration: 0.4,
     uppercase: true,
     aspect: '9:16',
@@ -199,6 +199,14 @@ export default function Home() {
     const dur = r.getDuration();
     if (dur <= 0 || !r.hasContent()) {
       toast.error('Paste a script first');
+      return null;
+    }
+    if (!isPro && dur > 5) {
+      toast.error('Free exports are limited to 5 seconds. Upgrade for longer clips.');
+      return null;
+    }
+    if (!isPro && options.transparentBg) {
+      toast.error('Transparent background exports are available with Pro.');
       return null;
     }
     return { r, dur };
@@ -450,6 +458,7 @@ export default function Home() {
           <div className="order-2 min-w-0 rounded-3xl border border-white/10 bg-white/[0.03] backdrop-blur-xl lg:order-1">
             <ControlPanel
               options={options}
+              isPro={isPro}
               setOptions={setOptions}
               onGenerate={handleGenerate}
               exporting={exporting}

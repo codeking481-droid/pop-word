@@ -43,8 +43,11 @@ const COMBINE_STYLES = [
   { id: 'motionTypographySmooth', label: 'Motion Typography Smooth', detail: 'Yellow/Blue - Matt Lou' },
   { id: 'stackReplace', label: 'Stack Replace', detail: 'Green/Black' },
   { id: 'pop', label: 'POP Classic', detail: 'Fast word pop' },
-  { id: 'hormozi', label: 'Hormozi Bold', detail: 'Coming soon', disabled: true },
-  { id: 'appleMinimal', label: 'Apple Minimal', detail: 'Coming soon', disabled: true },
+  { id: 'hormozi', label: 'Hormozi Aggressive', detail: 'White/Yellow' },
+  { id: 'imanGadzhi', label: 'Iman Gadzhi Luxury Tilted', detail: 'Cream/Gold' },
+  { id: 'mrbeast', label: 'MrBeast Hype Color Pop', detail: 'Yellow/Red' },
+  { id: 'liquidWarp', label: 'Liquid Warp / Shine TikTok', detail: 'Warped shine' },
+  { id: 'aestheticSerif', label: 'Aesthetic Serif / Apple Minimal', detail: 'Elegant serif' },
 ];
 
 function MediaThumb({ item }) {
@@ -54,7 +57,7 @@ function MediaThumb({ item }) {
   return <img src={item.url} alt="" className="h-full w-full object-cover" />;
 }
 
-export default function ControlPanel({ options, setOptions, onGenerate, exporting, onAddMedia, onSelectMedia, onRemoveMedia, onApplyPreset, batchScripts, setBatchScripts, onGenerateBatch, batchProgress, onMultiExport, multiExporting }) {
+export default function ControlPanel({ options, setOptions, onGenerate, exporting, onAddMedia, onSelectMedia, onRemoveMedia, onApplyPreset, batchScripts, setBatchScripts, onGenerateBatch, batchProgress, onMultiExport, multiExporting, isPro = false }) {
   const fileRef = useRef(null);
   const [dragging, setDragging] = useState(false);
   const [tab, setTab] = useState('pop');
@@ -128,15 +131,18 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
 
       <section className="rounded-2xl border border-[#00FF62]/35 bg-[#00FF62]/[0.06] p-3 shadow-[0_0_24px_-12px_rgba(0,255,98,0.65)]">
         <Label>Choose Styles to Combine (tick many)</Label>
+        <p className="mb-2 text-[11px] text-white/45">{isPro ? 'Pro: use all 8 styles' : 'Free: choose up to 3 styles'}</p>
         <div className="space-y-1.5">
           {COMBINE_STYLES.map((style) => {
             const selected = (options.selectedStyles || ['pop']).includes(style.id);
+            const maxTicks = isPro ? 8 : 3;
+            const disabled = selected ? false : (options.selectedStyles || ['pop']).length >= maxTicks;
             return (
-              <label key={style.id} className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 ${style.disabled ? 'border-white/10 opacity-45' : selected ? 'border-[#00FF62]/60 bg-[#00FF62]/10' : 'border-white/10 bg-black/20'}`}>
+              <label key={style.id} className={`flex items-center gap-3 rounded-xl border px-3 py-2.5 ${disabled ? 'border-white/10 opacity-45' : selected ? 'border-[#00FF62]/60 bg-[#00FF62]/10' : 'border-white/10 bg-black/20'}`}>
                 <input
                   type="checkbox"
                   checked={selected}
-                  disabled={style.disabled}
+                  disabled={disabled}
                   onChange={(e) => {
                     const current = options.selectedStyles || ['pop'];
                     const next = e.target.checked ? [...current, style.id] : current.filter((id) => id !== style.id);
@@ -152,6 +158,11 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
         <p className="mt-2 rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-[11px] leading-relaxed text-white/55">
           Your perfect clip rotates: {(options.selectedStyles || ['pop']).map((id) => COMBINE_STYLES.find((style) => style.id === id)?.label || id).join(' → ')} → repeat.
         </p>
+        <label className="mt-2 block text-[11px] text-white/55">
+          Shared speed — {(options.motionSpeed || 0.7).toFixed(2)}x
+          <input type="range" min="0.25" max="2.5" step="0.05" value={options.motionSpeed || 0.7} onChange={(e) => update({ motionSpeed: Number(e.target.value) })} className="pop-range mt-1 w-full" />
+          <span className="flex justify-between text-[10px] text-white/30"><span>Slow</span><span>Fast</span></span>
+        </label>
         <Label>Single style details</Label>
         <select
           value={options.animation}

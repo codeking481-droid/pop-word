@@ -342,11 +342,65 @@ export default class PopRenderer {
     const progress = Math.min(1, (time - index * step) / step);
     const renderItem = (itemIndex, itemProgress) => {
       const style = selected[itemIndex % selected.length];
+      if (['hormozi', 'imanGadzhi', 'mrbeast', 'liquidWarp', 'aestheticSerif'].includes(style)) {
+        this._renderUniqueChunk(chunks[itemIndex], itemProgress, style);
+        return;
+      }
       const animation = style === 'pop' ? 'Pop' : style === 'stackReplace' ? 'Slide Up' : 'Scale Shadow';
       this._renderWord(chunks[itemIndex], itemProgress, itemIndex, chunks.length, null, false, animation);
     };
     if (index > 0 && progress < 0.75) renderItem(index - 1, 0.8 + progress * 0.2);
     renderItem(index, progress);
+  }
+
+  _renderUniqueChunk(text, progress, style) {
+    const { ctx, W, H } = this;
+    const words = String(text).split(/\s+/).filter(Boolean);
+    const maxWidth = W * 0.9;
+    let size = Math.min(W, H) * (style === 'aestheticSerif' || style === 'imanGadzhi' ? 0.095 : 0.13);
+    const family = style === 'aestheticSerif' || style === 'imanGadzhi' ? 'Georgia, serif' : 'Anton, Arial Black, sans-serif';
+    ctx.font = `${style === 'aestheticSerif' ? 700 : 1000} ${size}px ${family}`;
+    while (ctx.measureText(text).width > maxWidth && size > 28) {
+      size *= 0.94;
+      ctx.font = `${style === 'aestheticSerif' ? 700 : 1000} ${size}px ${family}`;
+    }
+    const enter = Math.min(1, Math.max(0, progress / 0.35));
+    const eased = 1 - ((1 - enter) ** 3);
+    const y = (1 - eased) * H * 0.18;
+    const scale = style === 'mrbeast' ? 0.85 + eased * 0.35 : 0.94 + eased * 0.06;
+    ctx.save();
+    ctx.translate(W / 2, H / 2 + y);
+    ctx.scale(scale, scale);
+    ctx.globalAlpha = Math.min(1, enter);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.lineJoin = 'round';
+    ctx.letterSpacing = style === 'aestheticSerif' ? '-0.03em' : '-0.04em';
+    if (style === 'imanGadzhi') ctx.rotate(-0.052);
+    if (style === 'hormozi' || style === 'mrbeast') {
+      ctx.fillStyle = style === 'mrbeast' ? '#FFD600' : '#FFFFFF';
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = style === 'mrbeast' ? 10 : 8;
+      ctx.strokeText(text, 0, 0);
+      ctx.fillText(text, 0, 0);
+    } else if (style === 'liquidWarp') {
+      ctx.fillStyle = '#FFFFFF';
+      ctx.shadowColor = '#00E5FF';
+      ctx.shadowBlur = 18 + Math.sin(progress * Math.PI * 8) * 8;
+      ctx.fillText(text, Math.sin(progress * 20) * 8, Math.sin(progress * 14) * 10);
+    } else {
+      ctx.fillStyle = style === 'imanGadzhi' ? '#FDFBF7' : '#111111';
+      ctx.fillText(text, 0, 0);
+      if (style === 'imanGadzhi') {
+        ctx.strokeStyle = '#D4AF37';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(-ctx.measureText(text).width / 2, size * 0.62);
+        ctx.lineTo(ctx.measureText(text).width / 2, size * 0.62);
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
   }
 
   _renderMotionTypographySmooth(t) {
