@@ -62,6 +62,9 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
   const [dragging, setDragging] = useState(false);
   const [tab, setTab] = useState('pop');
   const busy = !!exporting;
+  const mp4Supported = typeof MediaRecorder !== 'undefined'
+    && ['video/mp4;codecs=h264', 'video/mp4;codecs=avc1.42E01E', 'video/mp4;codecs=avc1']
+      .some((type) => MediaRecorder.isTypeSupported(type));
 
   const update = (patch) => setOptions((current) => ({ ...current, ...patch }));
 
@@ -417,7 +420,7 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
               onChange={(e) => update({ exportMode: e.target.value, transparentBg: e.target.value === 'transparent' })}
               className="w-full rounded-lg border border-white/10 bg-black/50 px-3 py-2.5 text-sm text-white outline-none focus:border-[#00FF62]"
             >
-              <option value="green">Mobile Overlay (MP4 + Chroma Key) — CapCut/InShot</option>
+              <option value="green">Mobile Transparent (MP4 + Chroma Key) — CapCut/InShot</option>
               <option value="transparent">Desktop Transparent (WebM + Alpha)</option>
             </select>
           </label>
@@ -437,7 +440,8 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
           )}
           {(!options.exportMode || options.exportMode === 'green') && (
             <div className="rounded-xl border border-green-400/30 bg-green-400/[0.08] p-3 text-[11px] leading-relaxed text-white/70">
-              Mobile editors cannot reliably import alpha video. This export is H.264 MP4 with #00FF00; import it, choose Chroma Key, and remove the green to create a transparent caption overlay.
+              Mobile editors cannot reliably import alpha video. This export creates an H.264 MP4 with #00FF00; import it, choose Chroma Key, select the green, and remove it to create a transparent caption overlay.
+              {!mp4Supported && <span className="mt-2 block font-semibold text-amber-300">This browser cannot create H.264 MP4. Use Safari/Chrome/Edge with MP4 recording support, or open PopUp on a desktop browser before exporting.</span>}
             </div>
           )}
           <ToggleRow label="Auto-highlight key words" on={options.autoHighlight} onClick={() => update({ autoHighlight: !options.autoHighlight })} />
