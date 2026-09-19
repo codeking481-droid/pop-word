@@ -31,11 +31,10 @@ export async function recordVideo(renderer, { duration, onProgress, transparentB
   }
 
   const transparentMime = 'video/webm;codecs=vp9';
-  const mimeType = transparentBg && MediaRecorder.isTypeSupported(transparentMime)
-    ? transparentMime
-    : transparentBg && MediaRecorder.isTypeSupported('video/webm')
-    ? 'video/webm'
-    : pickVideoMime();
+  if (transparentBg && !MediaRecorder.isTypeSupported(transparentMime)) {
+    throw new Error('Transparent export requires a browser with VP9 WebM alpha support. Please use the latest Chrome or Edge.');
+  }
+  const mimeType = transparentBg ? transparentMime : pickVideoMime();
   if (!mimeType) throw new Error('This browser cannot encode a supported video format');
   const requestedDuration = Number(duration);
   // CapCut and InShot can round a nominal two-second WebM down after encoder

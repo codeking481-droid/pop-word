@@ -167,14 +167,14 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
           <input
             type="number"
             min="0"
-            max="600"
+            max="3600"
             step="0.1"
             value={options.voiceoverDuration || ''}
-            onChange={(e) => update({ voiceoverDuration: Math.max(0, Math.min(600, Number(e.target.value) || 0)) })}
+            onChange={(e) => update({ voiceoverDuration: Math.max(0, Math.min(3600, Number(e.target.value) || 0)) })}
             placeholder="e.g. 8.5"
             className="mt-1 w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2.5 text-sm text-white outline-none focus:border-[#00FF62]"
           />
-          <span className="mt-1 block text-[10px] text-white/30">Enter the exact voiceover duration to keep captions synced while changing visual speed.</span>
+          <span className="mt-1 block text-[10px] text-white/30">Supports voiceovers from 2 seconds up to 60 minutes. Enter the exact length to keep captions synced while changing visual speed.</span>
         </label>
         <Label>Single style details</Label>
         <select

@@ -69,7 +69,7 @@ export default function Home() {
     radius: 16,
     gradientColors: ['#1a0b3e', '#0a0118'],
     bgImage: null,
-    watermark: true,
+    watermark: false,
     mode: 'pop',
     template: 'pop',
     minimalCards: [],

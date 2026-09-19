@@ -137,7 +137,7 @@ export default class PopRenderer {
     const selectedStyles = this.options.selectedStyles || [];
     const voiceoverDuration = Number(this.options.voiceoverDuration);
     if (Number.isFinite(voiceoverDuration) && voiceoverDuration > 0) {
-      return Math.max(2, Math.min(600, voiceoverDuration));
+      return Math.max(2, Math.min(3600, voiceoverDuration));
     }
     if (selectedStyles.length > 1) {
       const speed = Math.max(0.25, Number(this.options.motionSpeed) || 0.7);
@@ -303,7 +303,6 @@ export default class PopRenderer {
     if (this.options.showProgressbar) this._drawProgressBar(t);
     if (zoom !== 1) ctx.restore();
     if (this.options.brandEnabled) this._drawLogo();
-    if (this.options.watermark) this._drawWatermark();
   }
 
   _drawMinimalBackground() {
@@ -345,7 +344,7 @@ export default class PopRenderer {
     const hasFixedDuration = Number.isFinite(fixedDuration) && fixedDuration > 0;
     const words = chunks.join(' ').split(/\s+/).filter(Boolean).length;
     const duration = hasFixedDuration
-      ? Math.max(2, Math.min(600, fixedDuration))
+      ? Math.max(2, Math.min(3600, fixedDuration))
       : Math.max(2, words * 0.38) / speed;
     const timelineSpeed = hasFixedDuration ? 1 : speed;
     const step = duration / chunks.length;
@@ -442,7 +441,7 @@ export default class PopRenderer {
       const fixedDuration = Number(options.voiceoverDuration);
       const hasFixedDuration = Number.isFinite(fixedDuration) && fixedDuration > 0;
       const motionDuration = hasFixedDuration
-        ? Math.max(2, Math.min(600, fixedDuration))
+        ? Math.max(2, Math.min(3600, fixedDuration))
         : Math.max(2, motionChunks.length * 0.72);
       const motionTime = t * (hasFixedDuration ? 1 : Math.max(0.25, Number(options.motionSpeed) || 1));
       const activeText = String(motionChunks[Math.floor(motionTime / (motionDuration / Math.max(1, motionChunks.length))) % Math.max(1, motionChunks.length)] || '').toLowerCase();
@@ -469,7 +468,7 @@ export default class PopRenderer {
     const fixedDuration = Number(options.voiceoverDuration);
     const hasFixedDuration = Number.isFinite(fixedDuration) && fixedDuration > 0;
     const totalDuration = hasFixedDuration
-      ? Math.max(2, Math.min(600, fixedDuration))
+      ? Math.max(2, Math.min(3600, fixedDuration))
       : Math.max(2, chunks.length * durationPerChunk);
     const overlap = 0.4;
     const step = hasFixedDuration
