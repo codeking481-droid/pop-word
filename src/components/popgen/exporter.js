@@ -15,7 +15,11 @@ export function pickVideoMime() {
 }
 
 export function pickMp4Mime() {
-  const types = ['video/mp4;codecs=h264', 'video/mp4'];
+  const types = [
+    'video/mp4;codecs=h264',
+    'video/mp4;codecs=avc1.42E01E',
+    'video/mp4;codecs=avc1',
+  ];
   for (const type of types) {
     if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported(type)) return type;
   }
@@ -42,9 +46,9 @@ export async function recordVideo(renderer, { duration, onProgress, transparentB
   if (transparentBg && !MediaRecorder.isTypeSupported(transparentMime)) {
     throw new Error('Transparent export requires a browser with VP9 WebM alpha support. Please use the latest Chrome or Edge.');
   }
-  const mimeType = transparentBg ? transparentMime : greenScreen ? (pickMp4Mime() || pickVideoMime()) : pickVideoMime();
+  const mimeType = transparentBg ? transparentMime : greenScreen ? pickMp4Mime() : pickVideoMime();
   if (greenScreen && !mimeType) {
-    throw new Error('Green Screen export is not supported by this browser. Please use the latest Chrome, Edge, Safari, or Firefox.');
+    throw new Error('Green Screen requires H.264 MP4 recording. This browser does not support it; try Safari, Chrome, or Edge on a device with MP4 recording enabled.');
   }
   if (!mimeType) throw new Error('This browser cannot encode a supported video format');
   const requestedDuration = Number(duration);
@@ -60,6 +64,10 @@ export async function recordVideo(renderer, { duration, onProgress, transparentB
   } catch {
     stream.getTracks().forEach((track) => track.stop());
     throw new Error('This browser cannot start video recording');
+  }
+  if (greenScreen && !recorder.mimeType.toLowerCase().includes('video/mp4')) {
+    stream.getTracks().forEach((track) => track.stop());
+    throw new Error('Green Screen requires H.264 MP4 recording. This browser selected a different format, so no file was downloaded.');
   }
   const chunks = [];
   recorder.ondataavailable = (event) => {

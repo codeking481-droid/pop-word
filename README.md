@@ -38,10 +38,11 @@ use CapCut desktop or convert the file to a transparent MOV/HEVC file before
 importing on mobile.
 
 For CapCut or InShot on mobile or desktop, choose **Green Screen Export**. It
-records the captions over `#00FF00`, downloads as MP4 when the browser supports
-H.264 recording, and uses a green-background WebM fallback otherwise. Import
-the file and use Chroma Key to remove the green. Choose **Transparent Export
-(WebM)** for editors that support VP9 alpha.
+always requires H.264 MP4 recording and records the captions over `#00FF00`.
+If the browser cannot encode H.264 MP4, export stops with a clear error rather
+than creating an unusable WebM. Import the MP4 and use Chroma Key to remove
+the green. Choose **Transparent Export (WebM)** for editors that support VP9
+alpha.
 
 To sync captions to an existing voiceover, enter its exact length in
 **Voiceover length (seconds)**. Durations from 2 seconds to 60 minutes are

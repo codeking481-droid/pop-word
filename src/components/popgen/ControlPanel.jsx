@@ -429,7 +429,7 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
           )}
           {(!options.exportMode || options.exportMode === 'green') && (
             <div className="rounded-xl border border-green-400/30 bg-green-400/[0.08] p-3 text-[11px] leading-relaxed text-white/70">
-              Green Screen Export uses #00FF00 and works on mobile and desktop. It downloads as MP4 when supported, or WebM on browsers that cannot encode MP4; import it and use Chroma Key to remove the green.
+              Green Screen Export always downloads as H.264 MP4 with #00FF00 for mobile and desktop. If this browser cannot record H.264 MP4, export stops with an error instead of creating an unusable WebM.
             </div>
           )}
           <ToggleRow label="Auto-highlight key words" on={options.autoHighlight} onClick={() => update({ autoHighlight: !options.autoHighlight })} />
