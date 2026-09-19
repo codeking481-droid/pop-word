@@ -411,7 +411,7 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
           <ToggleRow label="Top progress bar" on={options.showProgressbar} onClick={() => update({ showProgressbar: !options.showProgressbar })} />
           <ToggleRow label="Show social safe zones" on={options.showSafeZones} onClick={() => update({ showSafeZones: !options.showSafeZones })} />
           <ToggleRow
-            label="Transparent caption (text only)"
+            label="Mobile overlay (Chroma Key MP4)"
             on={options.transparentBg}
             onClick={() => {
               const enabled = !options.transparentBg;
@@ -420,9 +420,9 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
           />
           {options.transparentBg && (
             <div className="rounded-xl border border-green-400/30 bg-green-400/[0.08] p-3 text-[11px] leading-relaxed text-white/70">
-              <div className="mb-1 font-bold text-[#00FF62]">TRANSPARENT CAPTION ON</div>
-              Preview and export contain only the animated words; the background is genuinely transparent. Download is a VP9 WebM with alpha and a minimum five-second duration for editors that support transparent video.
-              <span className="mt-2 block font-semibold text-amber-300">For mobile CapCut or InShot, use a green-screen export instead: those mobile apps do not reliably import alpha WebM video.</span>
+              <div className="mb-1 font-bold text-[#00FF62]">MOBILE OVERLAY ON</div>
+              Download is a standard H.264 MP4 with your animated popup words over a bright green key background. In CapCut or InShot, add the MP4 as an overlay, open Chroma Key, select the green, and remove it. The words remain visible after the green is removed.
+              <span className="mt-2 block font-semibold text-amber-300">A genuinely transparent video file is not reliably supported by CapCut/InShot mobile. This MP4 workflow is the compatible option.</span>
             </div>
           )}
           <ToggleRow label="Auto-highlight key words" on={options.autoHighlight} onClick={() => update({ autoHighlight: !options.autoHighlight })} />
