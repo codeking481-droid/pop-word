@@ -417,8 +417,8 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
               onChange={(e) => update({ exportMode: e.target.value, transparentBg: e.target.value === 'transparent' })}
               className="w-full rounded-lg border border-white/10 bg-black/50 px-3 py-2.5 text-sm text-white outline-none focus:border-[#00FF62]"
             >
-              <option value="green">Green Screen Export (MP4) — CapCut/InShot mobile</option>
-              <option value="transparent">Transparent Export (WebM + Alpha) — CapCut Web/Desktop</option>
+              <option value="green">Mobile Overlay (MP4 + Chroma Key) — CapCut/InShot</option>
+              <option value="transparent">Desktop Transparent (WebM + Alpha)</option>
             </select>
           </label>
           {(options.exportMode === 'transparent' || (!options.exportMode && options.transparentBg)) && (
@@ -429,7 +429,7 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
           )}
           {(!options.exportMode || options.exportMode === 'green') && (
             <div className="rounded-xl border border-green-400/30 bg-green-400/[0.08] p-3 text-[11px] leading-relaxed text-white/70">
-              Green Screen Export always downloads as H.264 MP4 with #00FF00 for mobile and desktop. If this browser cannot record H.264 MP4, export stops with an error instead of creating an unusable WebM.
+              Mobile editors cannot reliably import alpha video. This export is H.264 MP4 with #00FF00; import it, choose Chroma Key, and remove the green to create a transparent caption overlay.
             </div>
           )}
           <ToggleRow label="Auto-highlight key words" on={options.autoHighlight} onClick={() => update({ autoHighlight: !options.autoHighlight })} />

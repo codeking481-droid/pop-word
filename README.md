@@ -37,12 +37,15 @@ canvas alpha channel, but CapCut/InShot mobile may not import VP9 WebM files;
 use CapCut desktop or convert the file to a transparent MOV/HEVC file before
 importing on mobile.
 
-For CapCut or InShot on mobile or desktop, choose **Green Screen Export**. It
-always requires H.264 MP4 recording and records the captions over `#00FF00`.
-If the browser cannot encode H.264 MP4, export stops with a clear error rather
-than creating an unusable WebM. Import the MP4 and use Chroma Key to remove
-the green. Choose **Transparent Export (WebM)** for editors that support VP9
-alpha.
+For CapCut or InShot mobile, choose **Mobile Overlay (MP4 + Chroma Key)**. A
+mobile-compatible video cannot carry reliable alpha transparency, so this
+export records the captions over `#00FF00` in H.264 MP4. Import the MP4,
+choose Chroma Key, select the green, and remove it to create a transparent
+caption overlay. If the browser cannot encode H.264 MP4, export stops with a
+clear error rather than creating an unusable WebM.
+
+For CapCut Web/Desktop, Premiere, or DaVinci Resolve, choose **Desktop
+Transparent (WebM + Alpha)**. That path exports genuine VP9 alpha transparency.
 
 To sync captions to an existing voiceover, enter its exact length in
 **Voiceover length (seconds)**. Durations from 2 seconds to 60 minutes are
