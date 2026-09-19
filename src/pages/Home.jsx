@@ -333,7 +333,9 @@ export default function Home() {
       });
       downloadBlob(blob, options.transparentBg ? 'popword-transparent-video.webm' : 'popup-video.' + (blob.type.includes('mp4') ? 'mp4' : 'webm'));
       await recordTrialExport();
-      toast.success('Video ready!');
+      toast.success(options.transparentBg
+        ? 'Transparent WebM ready. If CapCut mobile rejects it, import it in CapCut desktop or convert it to a transparent MOV.'
+        : 'Video ready!');
     } catch (e) {
       toast.error(e?.message || 'Recording failed');
     } finally {

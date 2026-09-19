@@ -414,7 +414,7 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
           {options.transparentBg && (
             <div className="rounded-xl border border-[#00FF62]/30 bg-[#00FF62]/[0.08] p-3 text-[11px] leading-relaxed text-white/70">
               <div className="mb-1 font-bold text-[#00FF62]">TRANSPARENT OVERLAY READY</div>
-              Transparent clips export at 3 seconds minimum for CapCut/InShot compatibility. Import the downloaded WebM as an overlay/PiP; the checkerboard preview is only a guide and is not included in the file.
+              The downloaded WebM contains real alpha transparency and the checkerboard is not included. CapCut/InShot mobile may reject WebM; use CapCut desktop or convert the WebM to a transparent MOV/HEVC file before importing.
             </div>
           )}
           <ToggleRow label="Auto-highlight key words" on={options.autoHighlight} onClick={() => update({ autoHighlight: !options.autoHighlight })} />

@@ -101,7 +101,7 @@ export async function recordVideo(renderer, { duration, onProgress, transparentB
       if (settled) return;
       settled = true;
       cleanup();
-      resolve(new Blob(chunks, { type: mimeType.split(';')[0] }));
+      resolve(new Blob(chunks, { type: mimeType }));
     };
     recorder.onerror = (event) => fail(event.error || new Error('Video recording failed'));
   });

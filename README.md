@@ -32,8 +32,10 @@ visual guidance only and is never included in exported videos.
 For picture-in-picture captions, enable **Transparent BG (PiP for CapCut)**.
 The editor exports a VP9 WebM with a transparent canvas when the browser
 supports it. Transparent exports are recorded for at least three seconds so
-CapCut and InShot accept them as overlays; import the file as an overlay in
-either editor.
+the file has enough duration for overlay use. The exported WebM contains the
+canvas alpha channel, but CapCut/InShot mobile may not import VP9 WebM files;
+use CapCut desktop or convert the file to a transparent MOV/HEVC file before
+importing on mobile.
 
 To sync captions to an existing voiceover, enter its exact length in
 **Voiceover length (seconds)**. Durations from 2 seconds to 60 minutes are
