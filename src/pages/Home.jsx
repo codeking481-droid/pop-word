@@ -59,7 +59,7 @@ export default function Home() {
     showProgressbar: true,
     showSafeZones: false,
     transparentBg: false,
-    exportMode: 'green',
+    exportMode: 'normal',
     autoHighlight: false,
     highlightColor: '#FFD700',
     emojiPop: false,
@@ -325,24 +325,24 @@ export default function Home() {
     const ctx = ensureScript();
     if (!ctx) return;
     if (!canTrialExport()) return;
-    const exportMode = options.exportMode || (options.transparentBg ? 'transparent' : 'green');
-    const transparentExport = exportMode === 'transparent';
+    const transparentExport = false;
+    const greenScreenExport = options.transparentBg;
     setExporting({ type: 'MP4', progress: 0 });
     try {
       const blob = await recordVideo(ctx.r, {
         duration: ctx.dur,
         transparentBg: transparentExport,
-        greenScreen: exportMode === 'green',
+        greenScreen: greenScreenExport,
         onProgress: (p) => setExporting({ type: 'MP4', progress: p }),
       });
-      if (!transparentExport && !blob.type.toLowerCase().includes('video/mp4')) {
+      if (greenScreenExport && !blob.type.toLowerCase().includes('video/mp4')) {
         throw new Error('Green Screen export did not produce an H.264 MP4. No file was downloaded.');
       }
-      downloadBlob(blob, transparentExport ? 'popword-transparent-video.webm' : 'popword-green-screen.mp4');
+      downloadBlob(blob, greenScreenExport ? 'popword-transparent-overlay.mp4' : 'popup-video.' + (blob.type.includes('mp4') ? 'mp4' : 'webm'));
       await recordTrialExport();
-      toast.success(transparentExport
-        ? 'Transparent WebM ready. If CapCut mobile rejects it, import it in CapCut desktop or convert it to a transparent MOV.'
-        : 'Green Screen MP4 ready. Import it and use Chroma Key to remove the green.');
+      toast.success(greenScreenExport
+        ? 'Transparent overlay MP4 ready. Import it on mobile or desktop and use Chroma Key to remove the green.'
+        : 'Video ready!');
     } catch (e) {
       toast.error(e?.message || 'Recording failed');
     } finally {
@@ -357,8 +357,8 @@ export default function Home() {
     if (!scripts.length) { toast.error('Add at least one script'); return; }
     const renderer = rendererRef.current;
     if (!renderer) { toast.error('Preview is still loading'); return; }
-    const exportMode = options.exportMode || (options.transparentBg ? 'transparent' : 'green');
-    const transparentExport = exportMode === 'transparent';
+    const transparentExport = false;
+    const greenScreenExport = options.transparentBg;
     setBatchProgress({ current: 0, total: scripts.length });
     setExporting({ type: 'BATCH', progress: 0 });
     try {
@@ -377,13 +377,13 @@ export default function Home() {
           const blob = await recordVideo(renderer, {
             duration: dur,
             transparentBg: transparentExport,
-            greenScreen: exportMode === 'green',
+            greenScreen: greenScreenExport,
             onProgress: () => {},
           });
-          if (!transparentExport && !blob.type.toLowerCase().includes('video/mp4')) {
+          if (greenScreenExport && !blob.type.toLowerCase().includes('video/mp4')) {
             throw new Error('Green Screen export did not produce an H.264 MP4. No file was downloaded.');
           }
-          downloadBlob(blob, transparentExport ? `popword-transparent-${i + 1}.webm` : `popword-green-screen-${i + 1}.mp4`);
+          downloadBlob(blob, greenScreenExport ? `popword-transparent-overlay-${i + 1}.mp4` : `popword-${i + 1}.${blob.type.includes('mp4') ? 'mp4' : 'webm'}`);
           await recordTrialExport();
         } catch (e) {
           toast.error(`Video ${i + 1} failed${e?.message ? `: ${e.message}` : ''}`);
@@ -400,8 +400,8 @@ export default function Home() {
   const handleMultiExport = async () => {
     const ctx = ensureScript();
     if (!ctx) return;
-    const exportMode = options.exportMode || (options.transparentBg ? 'transparent' : 'green');
-    const transparentExport = exportMode === 'transparent';
+    const transparentExport = false;
+    const greenScreenExport = options.transparentBg;
     setMultiExporting(true);
     const aspects = ['9:16', '1:1', '4:5', '16:9'];
     const original = options.aspect;
@@ -416,11 +416,11 @@ export default function Home() {
         if (dur <= 0 || !r.hasContent()) continue;
         if (!canTrialExport()) break;
         try {
-          const blob = await recordVideo(r, { duration: dur, transparentBg: transparentExport, greenScreen: exportMode === 'green', onProgress: () => {} });
-          if (!transparentExport && !blob.type.toLowerCase().includes('video/mp4')) {
+          const blob = await recordVideo(r, { duration: dur, transparentBg: transparentExport, greenScreen: greenScreenExport, onProgress: () => {} });
+          if (greenScreenExport && !blob.type.toLowerCase().includes('video/mp4')) {
             throw new Error('Green Screen export did not produce an H.264 MP4. No file was downloaded.');
           }
-          downloadBlob(blob, transparentExport ? `popword-transparent-${a.replace(':', 'x')}.webm` : `popword-green-screen-${a.replace(':', 'x')}.mp4`);
+          downloadBlob(blob, greenScreenExport ? `popword-transparent-overlay-${a.replace(':', 'x')}.mp4` : `popword-${a.replace(':', 'x')}.${blob.type.includes('mp4') ? 'mp4' : 'webm'}`);
           await recordTrialExport();
           completed.push(a);
         } catch (e) {

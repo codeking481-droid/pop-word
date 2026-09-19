@@ -413,34 +413,18 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
         <div className="space-y-2.5">
           <ToggleRow label="Top progress bar" on={options.showProgressbar} onClick={() => update({ showProgressbar: !options.showProgressbar })} />
           <ToggleRow label="Show social safe zones" on={options.showSafeZones} onClick={() => update({ showSafeZones: !options.showSafeZones })} />
-          <label className="block rounded-xl border border-white/10 bg-black/30 p-3">
-            <span className="mb-1 block text-xs font-bold text-white/80">Export background</span>
-            <select
-              value={options.exportMode || (options.transparentBg ? 'transparent' : 'green')}
-              onChange={(e) => update({ exportMode: e.target.value, transparentBg: e.target.value === 'transparent' })}
-              className="w-full rounded-lg border border-white/10 bg-black/50 px-3 py-2.5 text-sm text-white outline-none focus:border-[#00FF62]"
-            >
-              <option value="green">Mobile Transparent (MP4 + Chroma Key) — CapCut/InShot</option>
-              <option value="transparent">Desktop Transparent (WebM + Alpha)</option>
-            </select>
-          </label>
           <ToggleRow
-            label="Transparent canvas (desktop/WebM alpha)"
+            label="Transparent overlay (mobile + desktop)"
             on={options.transparentBg}
             onClick={() => {
               const enabled = !options.transparentBg;
-              update({ transparentBg: enabled, exportMode: enabled ? 'transparent' : 'green' });
+              update({ transparentBg: enabled, exportMode: enabled ? 'green' : 'normal' });
             }}
           />
-          {(options.exportMode === 'transparent' || (!options.exportMode && options.transparentBg)) && (
-            <div className="rounded-xl border border-[#00FF62]/30 bg-[#00FF62]/[0.08] p-3 text-[11px] leading-relaxed text-white/70">
-              <div className="mb-1 font-bold text-[#00FF62]">TRANSPARENT EXPORT ON · REAL ALPHA</div>
-              The downloaded VP9 WebM has no colored background; the checkerboard is preview-only. Use it as a caption or popup overlay in editors that support WebM alpha. For CapCut/InShot mobile, choose Green Screen Export and apply Chroma Key.
-            </div>
-          )}
-          {(!options.exportMode || options.exportMode === 'green') && (
+          {options.transparentBg && (
             <div className="rounded-xl border border-green-400/30 bg-green-400/[0.08] p-3 text-[11px] leading-relaxed text-white/70">
-              Mobile editors cannot reliably import alpha video. This export creates an H.264 MP4 with #00FF00; import it, choose Chroma Key, select the green, and remove it to create a transparent caption overlay.
+              <div className="mb-1 font-bold text-[#00FF62]">TRANSPARENT OVERLAY ON</div>
+              This creates an H.264 MP4 with #00FF00. Import it in CapCut or InShot on mobile or desktop, choose Chroma Key, select the green, and remove it to create your transparent caption overlay.
               {!mp4Supported && <span className="mt-2 block font-semibold text-amber-300">This browser cannot create H.264 MP4. Use Safari/Chrome/Edge with MP4 recording support, or open PopUp on a desktop browser before exporting.</span>}
             </div>
           )}
