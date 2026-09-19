@@ -42,15 +42,15 @@ export async function recordVideo(renderer, { duration, onProgress, transparentB
   if (transparentBg && !MediaRecorder.isTypeSupported(transparentMime)) {
     throw new Error('Transparent export requires a browser with VP9 WebM alpha support. Please use the latest Chrome or Edge.');
   }
-  const mimeType = transparentBg ? transparentMime : greenScreen ? pickMp4Mime() : pickVideoMime();
+  const mimeType = transparentBg ? transparentMime : greenScreen ? (pickMp4Mime() || pickVideoMime()) : pickVideoMime();
   if (greenScreen && !mimeType) {
-    throw new Error('Green Screen MP4 is not supported by this browser. Please use the latest Chrome or Edge or Safari.');
+    throw new Error('Green Screen export is not supported by this browser. Please use the latest Chrome, Edge, Safari, or Firefox.');
   }
   if (!mimeType) throw new Error('This browser cannot encode a supported video format');
   const requestedDuration = Number(duration);
   // CapCut and InShot can round a nominal two-second WebM down after encoder
   // startup and timestamp quantization, so transparent clips need a safety margin.
-  const safeDuration = transparentBg ? Math.max(3, requestedDuration) : requestedDuration;
+  const safeDuration = transparentBg || greenScreen ? Math.max(3, requestedDuration) : requestedDuration;
   if (!Number.isFinite(safeDuration) || safeDuration <= 0) throw new Error('Nothing to export');
 
   const stream = renderer.canvas.captureStream(30);

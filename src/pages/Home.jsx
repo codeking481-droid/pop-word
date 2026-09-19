@@ -335,11 +335,12 @@ export default function Home() {
         greenScreen: exportMode === 'green',
         onProgress: (p) => setExporting({ type: 'MP4', progress: p }),
       });
-      downloadBlob(blob, transparentExport ? 'popword-transparent-video.webm' : 'popword-green-screen.mp4');
+      const extension = blob.type.includes('mp4') ? 'mp4' : 'webm';
+      downloadBlob(blob, transparentExport ? 'popword-transparent-video.webm' : `popword-green-screen.${extension}`);
       await recordTrialExport();
       toast.success(transparentExport
         ? 'Transparent WebM ready. If CapCut mobile rejects it, import it in CapCut desktop or convert it to a transparent MOV.'
-        : 'Video ready!');
+        : `Green Screen ${extension.toUpperCase()} ready. Import it and use Chroma Key to remove the green.`);
     } catch (e) {
       toast.error(e?.message || 'Recording failed');
     } finally {
@@ -377,7 +378,8 @@ export default function Home() {
             greenScreen: exportMode === 'green',
             onProgress: () => {},
           });
-          downloadBlob(blob, transparentExport ? `popword-transparent-${i + 1}.webm` : `popword-green-screen-${i + 1}.mp4`);
+          const extension = blob.type.includes('mp4') ? 'mp4' : 'webm';
+          downloadBlob(blob, transparentExport ? `popword-transparent-${i + 1}.webm` : `popword-green-screen-${i + 1}.${extension}`);
           await recordTrialExport();
         } catch (e) {
           toast.error(`Video ${i + 1} failed${e?.message ? `: ${e.message}` : ''}`);
@@ -411,7 +413,8 @@ export default function Home() {
         if (!canTrialExport()) break;
         try {
           const blob = await recordVideo(r, { duration: dur, transparentBg: transparentExport, greenScreen: exportMode === 'green', onProgress: () => {} });
-          downloadBlob(blob, transparentExport ? `popword-transparent-${a.replace(':', 'x')}.webm` : `popword-green-screen-${a.replace(':', 'x')}.mp4`);
+          const extension = blob.type.includes('mp4') ? 'mp4' : 'webm';
+          downloadBlob(blob, transparentExport ? `popword-transparent-${a.replace(':', 'x')}.webm` : `popword-green-screen-${a.replace(':', 'x')}.${extension}`);
           await recordTrialExport();
           completed.push(a);
         } catch (e) {
