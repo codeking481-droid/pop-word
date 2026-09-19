@@ -62,9 +62,6 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
   const [dragging, setDragging] = useState(false);
   const [tab, setTab] = useState('pop');
   const busy = !!exporting;
-  const mp4Supported = typeof MediaRecorder !== 'undefined'
-    && ['video/mp4;codecs=h264', 'video/mp4;codecs=avc1.42E01E', 'video/mp4;codecs=avc1']
-      .some((type) => MediaRecorder.isTypeSupported(type));
 
   const update = (patch) => setOptions((current) => ({ ...current, ...patch }));
 
@@ -414,18 +411,18 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
           <ToggleRow label="Top progress bar" on={options.showProgressbar} onClick={() => update({ showProgressbar: !options.showProgressbar })} />
           <ToggleRow label="Show social safe zones" on={options.showSafeZones} onClick={() => update({ showSafeZones: !options.showSafeZones })} />
           <ToggleRow
-            label="Transparent overlay (mobile + desktop)"
+            label="Transparent caption (text only)"
             on={options.transparentBg}
             onClick={() => {
               const enabled = !options.transparentBg;
-              update({ transparentBg: enabled, exportMode: enabled ? 'green' : 'normal' });
+              update({ transparentBg: enabled, exportMode: enabled ? 'transparent' : 'normal' });
             }}
           />
           {options.transparentBg && (
             <div className="rounded-xl border border-green-400/30 bg-green-400/[0.08] p-3 text-[11px] leading-relaxed text-white/70">
-              <div className="mb-1 font-bold text-[#00FF62]">TRANSPARENT OVERLAY ON</div>
-              This creates an H.264 MP4 with #00FF00. Import it in CapCut or InShot on mobile or desktop, choose Chroma Key, select the green, and remove it to create your transparent caption overlay.
-              {!mp4Supported && <span className="mt-2 block font-semibold text-amber-300">This browser cannot create H.264 MP4. Use Safari/Chrome/Edge with MP4 recording support, or open PopUp on a desktop browser before exporting.</span>}
+              <div className="mb-1 font-bold text-[#00FF62]">TRANSPARENT CAPTION ON</div>
+              Preview and export contain only the animated words; the background is genuinely transparent. Download is a VP9 WebM with alpha for editors that support transparent video.
+              <span className="mt-2 block font-semibold text-amber-300">For mobile CapCut or InShot, use a green-screen export instead: those mobile apps do not reliably import alpha WebM video.</span>
             </div>
           )}
           <ToggleRow label="Auto-highlight key words" on={options.autoHighlight} onClick={() => update({ autoHighlight: !options.autoHighlight })} />

@@ -305,9 +305,9 @@ export default class PopRenderer {
       else if (this.options.animation === 'Motion Typography') this._renderMotionTypographySmooth(t);
       else this._drawWord(t);
     }
-    if (this.options.showProgressbar) this._drawProgressBar(t);
+    if (this.options.showProgressbar && !this.options.transparentBg) this._drawProgressBar(t);
     if (zoom !== 1) ctx.restore();
-    if (this.options.brandEnabled) this._drawLogo();
+    if (this.options.brandEnabled && !this.options.transparentBg) this._drawLogo();
   }
 
   _drawMinimalBackground() {
@@ -468,6 +468,9 @@ export default class PopRenderer {
     } else {
       ctx.fillStyle = options.motionBgColor || '#FFEB00';
       ctx.fillRect(0, 0, W, H);
+    }
+    if (options.transparentBg && options.animation !== 'Motion Typography') {
+      ctx.clearRect(0, 0, W, H);
     }
     const chunks = this._motionChunks();
     if (!chunks.length) return;

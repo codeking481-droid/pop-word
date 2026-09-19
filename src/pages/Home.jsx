@@ -325,24 +325,26 @@ export default function Home() {
     const ctx = ensureScript();
     if (!ctx) return;
     if (!canTrialExport()) return;
-    const transparentExport = false;
-    const greenScreenExport = options.transparentBg;
-    setExporting({ type: 'MP4', progress: 0 });
+    const transparentExport = options.transparentBg;
+    const greenScreenExport = false;
+    setExporting({ type: transparentExport ? 'WEBM' : 'VIDEO', progress: 0 });
     try {
       const blob = await recordVideo(ctx.r, {
         duration: ctx.dur,
         transparentBg: transparentExport,
         greenScreen: greenScreenExport,
-        onProgress: (p) => setExporting({ type: 'MP4', progress: p }),
+        onProgress: (p) => setExporting({ type: transparentExport ? 'WEBM' : 'VIDEO', progress: p }),
       });
       if (greenScreenExport && !blob.type.toLowerCase().includes('video/mp4')) {
         throw new Error('Green Screen export did not produce an H.264 MP4. No file was downloaded.');
       }
-      downloadBlob(blob, greenScreenExport ? 'popword-transparent-overlay.mp4' : 'popup-video.' + (blob.type.includes('mp4') ? 'mp4' : 'webm'));
+      downloadBlob(blob, transparentExport ? 'popword-transparent-caption.webm' : 'popup-video.' + (blob.type.includes('mp4') ? 'mp4' : 'webm'));
       await recordTrialExport();
       toast.success(greenScreenExport
-        ? 'Transparent overlay MP4 ready. Import it on mobile or desktop and use Chroma Key to remove the green.'
-        : 'Video ready!');
+        ? 'Green Screen MP4 ready.'
+        : transparentExport
+          ? 'Transparent caption ready. Place this WebM over your video in a compatible editor.'
+          : 'Video ready!');
     } catch (e) {
       toast.error(e?.message || 'Recording failed');
     } finally {
@@ -357,8 +359,8 @@ export default function Home() {
     if (!scripts.length) { toast.error('Add at least one script'); return; }
     const renderer = rendererRef.current;
     if (!renderer) { toast.error('Preview is still loading'); return; }
-    const transparentExport = false;
-    const greenScreenExport = options.transparentBg;
+    const transparentExport = options.transparentBg;
+    const greenScreenExport = false;
     setBatchProgress({ current: 0, total: scripts.length });
     setExporting({ type: 'BATCH', progress: 0 });
     try {
@@ -383,7 +385,7 @@ export default function Home() {
           if (greenScreenExport && !blob.type.toLowerCase().includes('video/mp4')) {
             throw new Error('Green Screen export did not produce an H.264 MP4. No file was downloaded.');
           }
-          downloadBlob(blob, greenScreenExport ? `popword-transparent-overlay-${i + 1}.mp4` : `popword-${i + 1}.${blob.type.includes('mp4') ? 'mp4' : 'webm'}`);
+          downloadBlob(blob, transparentExport ? `popword-transparent-caption-${i + 1}.webm` : `popword-${i + 1}.${blob.type.includes('mp4') ? 'mp4' : 'webm'}`);
           await recordTrialExport();
         } catch (e) {
           toast.error(`Video ${i + 1} failed${e?.message ? `: ${e.message}` : ''}`);
@@ -400,8 +402,8 @@ export default function Home() {
   const handleMultiExport = async () => {
     const ctx = ensureScript();
     if (!ctx) return;
-    const transparentExport = false;
-    const greenScreenExport = options.transparentBg;
+    const transparentExport = options.transparentBg;
+    const greenScreenExport = false;
     setMultiExporting(true);
     const aspects = ['9:16', '1:1', '4:5', '16:9'];
     const original = options.aspect;
@@ -420,7 +422,7 @@ export default function Home() {
           if (greenScreenExport && !blob.type.toLowerCase().includes('video/mp4')) {
             throw new Error('Green Screen export did not produce an H.264 MP4. No file was downloaded.');
           }
-          downloadBlob(blob, greenScreenExport ? `popword-transparent-overlay-${a.replace(':', 'x')}.mp4` : `popword-${a.replace(':', 'x')}.${blob.type.includes('mp4') ? 'mp4' : 'webm'}`);
+          downloadBlob(blob, transparentExport ? `popword-transparent-caption-${a.replace(':', 'x')}.webm` : `popword-${a.replace(':', 'x')}.${blob.type.includes('mp4') ? 'mp4' : 'webm'}`);
           await recordTrialExport();
           completed.push(a);
         } catch (e) {

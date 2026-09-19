@@ -29,19 +29,15 @@ single, batch, or multi-format export consumes one trial export. Once
 The editor also includes an optional Social safe zones preview overlay. It is
 visual guidance only and is never included in exported videos.
 
-For picture-in-picture captions, enable **Transparent BG (PiP for CapCut)**.
-The editor exports a VP9 WebM with a transparent canvas when the browser
-supports it. Transparent exports are recorded for at least three seconds so
-the file has enough duration for overlay use. The exported WebM contains the
-canvas alpha channel, but CapCut/InShot mobile may not import VP9 WebM files;
-use CapCut desktop or convert the file to a transparent MOV/HEVC file before
-importing on mobile.
-
-Turn on **Transparent overlay (mobile + desktop)** for one cross-device
-workflow. The download is an H.264 MP4 over `#00FF00`; import it in CapCut or
-InShot on mobile or desktop, choose Chroma Key, select the green, and remove
-it to create the transparent caption overlay. When the toggle is off, the
-editor exports the normal selected background.
+For picture-in-picture captions, enable **Transparent caption (text only)**.
+The preview and downloaded file contain only the animated words: no selected
+background, progress bar, logo, or green fill. The editor exports a VP9 WebM
+with a real alpha channel, recorded for at least three seconds so it can be
+placed over another video. CapCut desktop/web and other alpha-video editors
+can use it directly. CapCut/InShot mobile may not import VP9 WebM alpha files;
+those apps require a chroma-key MP4 workflow instead of genuine transparent
+video. When the toggle is off, the editor exports the normal selected
+background.
 
 To sync captions to an existing voiceover, enter its exact length in
 **Voiceover length (seconds)**. Durations from 2 seconds to 60 minutes are
