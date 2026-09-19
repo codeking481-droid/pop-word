@@ -59,6 +59,7 @@ export default function Home() {
     showProgressbar: true,
     showSafeZones: false,
     transparentBg: false,
+    exportMode: 'green',
     autoHighlight: false,
     highlightColor: '#FFD700',
     emojiPop: false,
@@ -324,16 +325,19 @@ export default function Home() {
     const ctx = ensureScript();
     if (!ctx) return;
     if (!canTrialExport()) return;
+    const exportMode = options.exportMode || (options.transparentBg ? 'transparent' : 'green');
+    const transparentExport = exportMode === 'transparent';
     setExporting({ type: 'MP4', progress: 0 });
     try {
       const blob = await recordVideo(ctx.r, {
         duration: ctx.dur,
-        transparentBg: options.transparentBg,
+        transparentBg: transparentExport,
+        greenScreen: exportMode === 'green',
         onProgress: (p) => setExporting({ type: 'MP4', progress: p }),
       });
-      downloadBlob(blob, options.transparentBg ? 'popword-transparent-video.webm' : 'popup-video.' + (blob.type.includes('mp4') ? 'mp4' : 'webm'));
+      downloadBlob(blob, transparentExport ? 'popword-transparent-video.webm' : 'popword-green-screen.mp4');
       await recordTrialExport();
-      toast.success(options.transparentBg
+      toast.success(transparentExport
         ? 'Transparent WebM ready. If CapCut mobile rejects it, import it in CapCut desktop or convert it to a transparent MOV.'
         : 'Video ready!');
     } catch (e) {
@@ -350,6 +354,8 @@ export default function Home() {
     if (!scripts.length) { toast.error('Add at least one script'); return; }
     const renderer = rendererRef.current;
     if (!renderer) { toast.error('Preview is still loading'); return; }
+    const exportMode = options.exportMode || (options.transparentBg ? 'transparent' : 'green');
+    const transparentExport = exportMode === 'transparent';
     setBatchProgress({ current: 0, total: scripts.length });
     setExporting({ type: 'BATCH', progress: 0 });
     try {
@@ -367,10 +373,11 @@ export default function Home() {
         try {
           const blob = await recordVideo(renderer, {
             duration: dur,
-            transparentBg: options.transparentBg,
+            transparentBg: transparentExport,
+            greenScreen: exportMode === 'green',
             onProgress: () => {},
           });
-          downloadBlob(blob, options.transparentBg ? `popword-transparent-${i + 1}.webm` : `popword-${i + 1}.${blob.type.includes('mp4') ? 'mp4' : 'webm'}`);
+          downloadBlob(blob, transparentExport ? `popword-transparent-${i + 1}.webm` : `popword-green-screen-${i + 1}.mp4`);
           await recordTrialExport();
         } catch (e) {
           toast.error(`Video ${i + 1} failed${e?.message ? `: ${e.message}` : ''}`);
@@ -387,6 +394,8 @@ export default function Home() {
   const handleMultiExport = async () => {
     const ctx = ensureScript();
     if (!ctx) return;
+    const exportMode = options.exportMode || (options.transparentBg ? 'transparent' : 'green');
+    const transparentExport = exportMode === 'transparent';
     setMultiExporting(true);
     const aspects = ['9:16', '1:1', '4:5', '16:9'];
     const original = options.aspect;
@@ -401,8 +410,8 @@ export default function Home() {
         if (dur <= 0 || !r.hasContent()) continue;
         if (!canTrialExport()) break;
         try {
-          const blob = await recordVideo(r, { duration: dur, transparentBg: options.transparentBg, onProgress: () => {} });
-          downloadBlob(blob, options.transparentBg ? `popword-transparent-${a.replace(':', 'x')}.webm` : `popword-${a.replace(':', 'x')}.${blob.type.includes('mp4') ? 'mp4' : 'webm'}`);
+          const blob = await recordVideo(r, { duration: dur, transparentBg: transparentExport, greenScreen: exportMode === 'green', onProgress: () => {} });
+          downloadBlob(blob, transparentExport ? `popword-transparent-${a.replace(':', 'x')}.webm` : `popword-green-screen-${a.replace(':', 'x')}.mp4`);
           await recordTrialExport();
           completed.push(a);
         } catch (e) {

@@ -279,7 +279,10 @@ export default class PopRenderer {
     ctx.globalAlpha = 1;
     ctx.globalCompositeOperation = 'source-over';
     ctx.shadowBlur = 0;
-    if (this.options.transparentBg) ctx.clearRect(0, 0, W, H);
+    if (this.options.exportBackground === 'green') {
+      ctx.fillStyle = '#00FF00';
+      ctx.fillRect(0, 0, W, H);
+    } else if (this.options.transparentBg) ctx.clearRect(0, 0, W, H);
     if (zoom !== 1) {
       ctx.save();
       ctx.translate(W / 2, H / 2);
@@ -434,7 +437,10 @@ export default class PopRenderer {
 
   _renderMotionTypographySmooth(t) {
     const { ctx, W, H, options } = this;
-    if (options.transparentBg) {
+    if (options.exportBackground === 'green') {
+      ctx.fillStyle = '#00FF00';
+      ctx.fillRect(0, 0, W, H);
+    } else if (options.transparentBg) {
       ctx.clearRect(0, 0, W, H);
     } else if (options.animation === 'Motion Typography') {
       const motionChunks = this._motionChunks();
@@ -801,6 +807,11 @@ export default class PopRenderer {
     if (options.transparentBg) return;
     const type = options.background || 'stars';
 
+    if (options.exportBackground === 'green') {
+      ctx.fillStyle = '#00FF00';
+      ctx.fillRect(0, 0, W, H);
+      return;
+    }
     if (type === 'custom' && this.customMedia) {
       this._drawMediaCover(this.customMedia);
       ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(0, 0, W, H);

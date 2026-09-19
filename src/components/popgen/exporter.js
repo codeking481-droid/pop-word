@@ -14,6 +14,14 @@ export function pickVideoMime() {
   return null;
 }
 
+export function pickMp4Mime() {
+  const types = ['video/mp4;codecs=h264', 'video/mp4'];
+  for (const type of types) {
+    if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported(type)) return type;
+  }
+  return null;
+}
+
 export function downloadBlob(blob, filename) {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
@@ -25,7 +33,7 @@ export function downloadBlob(blob, filename) {
   setTimeout(() => URL.revokeObjectURL(url), 4000);
 }
 
-export async function recordVideo(renderer, { duration, onProgress, transparentBg = false }) {
+export async function recordVideo(renderer, { duration, onProgress, transparentBg = false, greenScreen = false }) {
   if (typeof MediaRecorder === 'undefined' || !renderer?.canvas?.captureStream) {
     throw new Error('Video recording is not supported by this browser');
   }
@@ -34,7 +42,10 @@ export async function recordVideo(renderer, { duration, onProgress, transparentB
   if (transparentBg && !MediaRecorder.isTypeSupported(transparentMime)) {
     throw new Error('Transparent export requires a browser with VP9 WebM alpha support. Please use the latest Chrome or Edge.');
   }
-  const mimeType = transparentBg ? transparentMime : pickVideoMime();
+  const mimeType = transparentBg ? transparentMime : greenScreen ? pickMp4Mime() : pickVideoMime();
+  if (greenScreen && !mimeType) {
+    throw new Error('Green Screen MP4 is not supported by this browser. Please use the latest Chrome or Edge or Safari.');
+  }
   if (!mimeType) throw new Error('This browser cannot encode a supported video format');
   const requestedDuration = Number(duration);
   // CapCut and InShot can round a nominal two-second WebM down after encoder
@@ -58,6 +69,8 @@ export async function recordVideo(renderer, { duration, onProgress, transparentB
   const previousSpeed = renderer.speed;
   const previousTime = renderer.currentTime;
   const wasPlaying = renderer.playing;
+  const previousExportBackground = renderer.options?.exportBackground;
+  renderer.setOptions({ exportBackground: greenScreen ? 'green' : null });
   renderer.setSpeed(1);
   renderer.seek(0);
   renderer.play();
@@ -79,6 +92,7 @@ export async function recordVideo(renderer, { duration, onProgress, transparentB
     const cleanup = () => {
       if (frame !== null) cancelAnimationFrame(frame);
       renderer.pause();
+      renderer.setOptions({ exportBackground: previousExportBackground || null });
       renderer.setSpeed(previousSpeed);
       renderer.seek(previousTime);
       if (wasPlaying) renderer.play();

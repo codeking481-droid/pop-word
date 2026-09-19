@@ -410,11 +410,26 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
         <div className="space-y-2.5">
           <ToggleRow label="Top progress bar" on={options.showProgressbar} onClick={() => update({ showProgressbar: !options.showProgressbar })} />
           <ToggleRow label="Show social safe zones" on={options.showSafeZones} onClick={() => update({ showSafeZones: !options.showSafeZones })} />
-          <ToggleRow label="Transparent BG (PiP for CapCut)" on={options.transparentBg} onClick={() => update({ transparentBg: !options.transparentBg })} />
-          {options.transparentBg && (
+          <label className="block rounded-xl border border-white/10 bg-black/30 p-3">
+            <span className="mb-1 block text-xs font-bold text-white/80">Export background</span>
+            <select
+              value={options.exportMode || (options.transparentBg ? 'transparent' : 'green')}
+              onChange={(e) => update({ exportMode: e.target.value, transparentBg: e.target.value === 'transparent' })}
+              className="w-full rounded-lg border border-white/10 bg-black/50 px-3 py-2.5 text-sm text-white outline-none focus:border-[#00FF62]"
+            >
+              <option value="green">Green Screen Export (MP4) — CapCut/InShot mobile</option>
+              <option value="transparent">Transparent Export (WebM) — CapCut Web/Desktop</option>
+            </select>
+          </label>
+          {(options.exportMode === 'transparent' || (!options.exportMode && options.transparentBg)) && (
             <div className="rounded-xl border border-[#00FF62]/30 bg-[#00FF62]/[0.08] p-3 text-[11px] leading-relaxed text-white/70">
               <div className="mb-1 font-bold text-[#00FF62]">TRANSPARENT OVERLAY READY</div>
-              The downloaded WebM contains real alpha transparency and the checkerboard is not included. CapCut/InShot mobile may reject WebM; use CapCut desktop or convert the WebM to a transparent MOV/HEVC file before importing.
+              The downloaded WebM contains real alpha transparency. Use it in CapCut Web/Desktop, Premiere, or DaVinci. For CapCut/InShot mobile, choose Green Screen Export and apply Chroma Key.
+            </div>
+          )}
+          {(!options.exportMode || options.exportMode === 'green') && (
+            <div className="rounded-xl border border-green-400/30 bg-green-400/[0.08] p-3 text-[11px] leading-relaxed text-white/70">
+              Green Screen Export is an MP4 with #00FF00. Import it on mobile, then use Chroma Key to remove the green.
             </div>
           )}
           <ToggleRow label="Auto-highlight key words" on={options.autoHighlight} onClick={() => update({ autoHighlight: !options.autoHighlight })} />

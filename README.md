@@ -37,6 +37,11 @@ canvas alpha channel, but CapCut/InShot mobile may not import VP9 WebM files;
 use CapCut desktop or convert the file to a transparent MOV/HEVC file before
 importing on mobile.
 
+For CapCut or InShot mobile, choose **Green Screen Export (MP4)**. It records
+the captions over `#00FF00`; import the MP4 and use Chroma Key to remove the
+green. Choose **Transparent Export (WebM)** for CapCut Web/Desktop, Premiere,
+or DaVinci Resolve.
+
 To sync captions to an existing voiceover, enter its exact length in
 **Voiceover length (seconds)**. Durations from 2 seconds to 60 minutes are
 supported. That locks the clip duration while the visual speed control changes
