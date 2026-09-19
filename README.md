@@ -32,7 +32,7 @@ visual guidance only and is never included in exported videos.
 For picture-in-picture captions, enable **Transparent caption (text only)**.
 The preview and downloaded file contain only the animated words: no selected
 background, progress bar, logo, or green fill. The editor exports a VP9 WebM
-with a real alpha channel, recorded for at least three seconds so it can be
+with a real alpha channel, recorded for at least five seconds so it can be
 placed over another video. CapCut desktop/web and other alpha-video editors
 can use it directly. CapCut/InShot mobile may not import VP9 WebM alpha files;
 those apps require a chroma-key MP4 workflow instead of genuine transparent

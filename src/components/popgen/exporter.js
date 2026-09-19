@@ -52,9 +52,10 @@ export async function recordVideo(renderer, { duration, onProgress, transparentB
   }
   if (!mimeType) throw new Error('This browser cannot encode a supported video format');
   const requestedDuration = Number(duration);
-  // CapCut and InShot can round a nominal two-second WebM down after encoder
-  // startup and timestamp quantization, so transparent clips need a safety margin.
-  const safeDuration = transparentBg || greenScreen ? Math.max(3, requestedDuration) : requestedDuration;
+  // Mobile editors can read a short alpha WebM as a sub-second file when the
+  // encoder has little duration metadata. A five-second floor plus regular
+  // chunks gives the container reliable timestamps.
+  const safeDuration = transparentBg || greenScreen ? Math.max(5, requestedDuration) : requestedDuration;
   if (!Number.isFinite(safeDuration) || safeDuration <= 0) throw new Error('Nothing to export');
 
   const stream = renderer.canvas.captureStream(30);
@@ -91,7 +92,7 @@ export async function recordVideo(renderer, { duration, onProgress, transparentB
   renderer.seek(0);
   renderer.play();
   try {
-    recorder.start(100);
+    recorder.start(250);
   } catch {
     renderer.pause();
     renderer.setSpeed(previousSpeed);
@@ -124,7 +125,7 @@ export async function recordVideo(renderer, { duration, onProgress, transparentB
     const tick = () => {
       const elapsed = (performance.now() - start) / 1000;
       onProgress?.(Math.min(1, elapsed / safeDuration));
-      if (elapsed < safeDuration && !settled) frame = requestAnimationFrame(tick);
+      if (elapsed < safeDuration + 0.25 && !settled) frame = requestAnimationFrame(tick);
       else if (recorder.state !== 'inactive') recorder.stop();
     };
     frame = requestAnimationFrame(tick);

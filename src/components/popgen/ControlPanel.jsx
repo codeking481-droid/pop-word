@@ -421,7 +421,7 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
           {options.transparentBg && (
             <div className="rounded-xl border border-green-400/30 bg-green-400/[0.08] p-3 text-[11px] leading-relaxed text-white/70">
               <div className="mb-1 font-bold text-[#00FF62]">TRANSPARENT CAPTION ON</div>
-              Preview and export contain only the animated words; the background is genuinely transparent. Download is a VP9 WebM with alpha for editors that support transparent video.
+              Preview and export contain only the animated words; the background is genuinely transparent. Download is a VP9 WebM with alpha and a minimum five-second duration for editors that support transparent video.
               <span className="mt-2 block font-semibold text-amber-300">For mobile CapCut or InShot, use a green-screen export instead: those mobile apps do not reliably import alpha WebM video.</span>
             </div>
           )}
