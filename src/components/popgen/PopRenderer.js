@@ -279,10 +279,12 @@ export default class PopRenderer {
     ctx.globalAlpha = 1;
     ctx.globalCompositeOperation = 'source-over';
     ctx.shadowBlur = 0;
-    if (this.options.exportBackground === 'green') {
+    const exportingGreen = this.options.exportBackground === 'green';
+    const transparentCanvas = Boolean(this.options.transparentBg) && !exportingGreen;
+    if (exportingGreen) {
       ctx.fillStyle = '#00FF00';
       ctx.fillRect(0, 0, W, H);
-    } else if (this.options.transparentBg) ctx.clearRect(0, 0, W, H);
+    } else if (transparentCanvas) ctx.clearRect(0, 0, W, H);
     if (zoom !== 1) {
       ctx.save();
       ctx.translate(W / 2, H / 2);
@@ -340,7 +342,7 @@ export default class PopRenderer {
     const chunks = this._motionChunks();
     const selected = options.selectedStyles || ['pop'];
     if (!chunks.length) return;
-    if (options.transparentBg) ctx.clearRect(0, 0, W, H);
+    if (options.transparentBg && options.exportBackground !== 'green') ctx.clearRect(0, 0, W, H);
     else this._drawBackground(t);
     const speed = Math.max(0.25, Number(options.motionSpeed) || 0.7);
     const fixedDuration = Number(options.voiceoverDuration);
@@ -804,7 +806,6 @@ export default class PopRenderer {
 
   _drawBackground(t) {
     const { ctx, W, H, options } = this;
-    if (options.transparentBg) return;
     const type = options.background || 'stars';
 
     if (options.exportBackground === 'green') {
@@ -812,6 +813,7 @@ export default class PopRenderer {
       ctx.fillRect(0, 0, W, H);
       return;
     }
+    if (options.transparentBg) return;
     if (type === 'custom' && this.customMedia) {
       this._drawMediaCover(this.customMedia);
       ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(0, 0, W, H);

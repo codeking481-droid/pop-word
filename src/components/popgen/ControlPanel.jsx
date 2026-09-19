@@ -421,6 +421,14 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
               <option value="transparent">Desktop Transparent (WebM + Alpha)</option>
             </select>
           </label>
+          <ToggleRow
+            label="Transparent canvas (desktop/WebM alpha)"
+            on={options.transparentBg}
+            onClick={() => {
+              const enabled = !options.transparentBg;
+              update({ transparentBg: enabled, exportMode: enabled ? 'transparent' : 'green' });
+            }}
+          />
           {(options.exportMode === 'transparent' || (!options.exportMode && options.transparentBg)) && (
             <div className="rounded-xl border border-[#00FF62]/30 bg-[#00FF62]/[0.08] p-3 text-[11px] leading-relaxed text-white/70">
               <div className="mb-1 font-bold text-[#00FF62]">TRANSPARENT EXPORT ON · REAL ALPHA</div>
