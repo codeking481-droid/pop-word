@@ -85,7 +85,7 @@ export async function recordVideo(renderer, { duration, onProgress, transparentB
   const previousTransparentBg = renderer.options?.transparentBg;
   renderer.setOptions({
     exportBackground: greenScreen ? 'green' : null,
-    transparentBg: transparentBg || previousTransparentBg,
+    transparentBg,
   });
   renderer.setSpeed(1);
   renderer.seek(0);
