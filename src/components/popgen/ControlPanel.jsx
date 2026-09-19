@@ -418,13 +418,13 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
               className="w-full rounded-lg border border-white/10 bg-black/50 px-3 py-2.5 text-sm text-white outline-none focus:border-[#00FF62]"
             >
               <option value="green">Green Screen Export (MP4) — CapCut/InShot mobile</option>
-              <option value="transparent">Transparent Export (WebM) — CapCut Web/Desktop</option>
+              <option value="transparent">Transparent Export (WebM + Alpha) — CapCut Web/Desktop</option>
             </select>
           </label>
           {(options.exportMode === 'transparent' || (!options.exportMode && options.transparentBg)) && (
             <div className="rounded-xl border border-[#00FF62]/30 bg-[#00FF62]/[0.08] p-3 text-[11px] leading-relaxed text-white/70">
-              <div className="mb-1 font-bold text-[#00FF62]">TRANSPARENT OVERLAY READY</div>
-              The downloaded WebM contains real alpha transparency. Use it in CapCut Web/Desktop, Premiere, or DaVinci. For CapCut/InShot mobile, choose Green Screen Export and apply Chroma Key.
+              <div className="mb-1 font-bold text-[#00FF62]">TRANSPARENT EXPORT ON · REAL ALPHA</div>
+              The downloaded VP9 WebM has no colored background; the checkerboard is preview-only. Use it as a caption or popup overlay in editors that support WebM alpha. For CapCut/InShot mobile, choose Green Screen Export and apply Chroma Key.
             </div>
           )}
           {(!options.exportMode || options.exportMode === 'green') && (

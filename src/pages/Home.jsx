@@ -335,6 +335,9 @@ export default function Home() {
         greenScreen: exportMode === 'green',
         onProgress: (p) => setExporting({ type: 'MP4', progress: p }),
       });
+      if (!transparentExport && !blob.type.toLowerCase().includes('video/mp4')) {
+        throw new Error('Green Screen export did not produce an H.264 MP4. No file was downloaded.');
+      }
       downloadBlob(blob, transparentExport ? 'popword-transparent-video.webm' : 'popword-green-screen.mp4');
       await recordTrialExport();
       toast.success(transparentExport
@@ -377,6 +380,9 @@ export default function Home() {
             greenScreen: exportMode === 'green',
             onProgress: () => {},
           });
+          if (!transparentExport && !blob.type.toLowerCase().includes('video/mp4')) {
+            throw new Error('Green Screen export did not produce an H.264 MP4. No file was downloaded.');
+          }
           downloadBlob(blob, transparentExport ? `popword-transparent-${i + 1}.webm` : `popword-green-screen-${i + 1}.mp4`);
           await recordTrialExport();
         } catch (e) {
@@ -411,6 +417,9 @@ export default function Home() {
         if (!canTrialExport()) break;
         try {
           const blob = await recordVideo(r, { duration: dur, transparentBg: transparentExport, greenScreen: exportMode === 'green', onProgress: () => {} });
+          if (!transparentExport && !blob.type.toLowerCase().includes('video/mp4')) {
+            throw new Error('Green Screen export did not produce an H.264 MP4. No file was downloaded.');
+          }
           downloadBlob(blob, transparentExport ? `popword-transparent-${a.replace(':', 'x')}.webm` : `popword-green-screen-${a.replace(':', 'x')}.mp4`);
           await recordTrialExport();
           completed.push(a);

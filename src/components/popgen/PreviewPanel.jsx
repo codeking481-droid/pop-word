@@ -114,8 +114,8 @@ export default function PreviewPanel({ options, onReady, onExportVideo, exportin
           >
             <canvas ref={canvasRef} className="h-full w-full" />
             {options.transparentBg && (
-              <div className="pointer-events-none absolute left-2 top-2 rounded-md border border-white/20 bg-black/70 px-2 py-1 text-[9px] font-bold tracking-wider text-[#00FF62]">
-                TRANSPARENT
+              <div className="pointer-events-none absolute left-2 top-2 rounded-md border border-[#00FF62]/60 bg-black/80 px-2 py-1 text-[9px] font-bold tracking-wider text-[#00FF62] shadow-[0_0_12px_rgba(0,255,98,0.45)]">
+                TRANSPARENT ON · ALPHA
               </div>
             )}
             {options.showSafeZones && (

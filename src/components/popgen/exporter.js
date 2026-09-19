@@ -65,6 +65,10 @@ export async function recordVideo(renderer, { duration, onProgress, transparentB
     stream.getTracks().forEach((track) => track.stop());
     throw new Error('This browser cannot start video recording');
   }
+  if (transparentBg && !recorder.mimeType.toLowerCase().includes('video/webm')) {
+    stream.getTracks().forEach((track) => track.stop());
+    throw new Error('Transparent export requires a VP9 WebM recorder. No file was downloaded because this browser returned a non-transparent format.');
+  }
   if (greenScreen && !recorder.mimeType.toLowerCase().includes('video/mp4')) {
     stream.getTracks().forEach((track) => track.stop());
     throw new Error('Green Screen requires H.264 MP4 recording. This browser selected a different format, so no file was downloaded.');
@@ -78,7 +82,11 @@ export async function recordVideo(renderer, { duration, onProgress, transparentB
   const previousTime = renderer.currentTime;
   const wasPlaying = renderer.playing;
   const previousExportBackground = renderer.options?.exportBackground;
-  renderer.setOptions({ exportBackground: greenScreen ? 'green' : null });
+  const previousTransparentBg = renderer.options?.transparentBg;
+  renderer.setOptions({
+    exportBackground: greenScreen ? 'green' : null,
+    transparentBg: transparentBg || previousTransparentBg,
+  });
   renderer.setSpeed(1);
   renderer.seek(0);
   renderer.play();
@@ -101,6 +109,7 @@ export async function recordVideo(renderer, { duration, onProgress, transparentB
       if (frame !== null) cancelAnimationFrame(frame);
       renderer.pause();
       renderer.setOptions({ exportBackground: previousExportBackground || null });
+      renderer.setOptions({ transparentBg: previousTransparentBg });
       renderer.setSpeed(previousSpeed);
       renderer.seek(previousTime);
       if (wasPlaying) renderer.play();
