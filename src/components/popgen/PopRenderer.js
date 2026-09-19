@@ -135,9 +135,15 @@ export default class PopRenderer {
   getDuration() {
     const template = this.options.template || this.options.mode;
     const selectedStyles = this.options.selectedStyles || [];
+    const voiceoverDuration = Number(this.options.voiceoverDuration);
+    if (Number.isFinite(voiceoverDuration) && voiceoverDuration > 0) {
+      return Math.max(2, Math.min(600, voiceoverDuration));
+    }
     if (selectedStyles.length > 1) {
       const speed = Math.max(0.25, Number(this.options.motionSpeed) || 0.7);
-      return Math.max(2, this._motionChunks().length * 0.432) / speed;
+      const words = this._motionChunks().join(' ').split(/\s+/).filter(Boolean).length;
+      const estimatedSpeech = Math.max(2, words * 0.38);
+      return Math.max(2, estimatedSpeech) / speed;
     }
     if (template === 'motion' || ['Motion Typography', 'Minimal Cards', 'Flow Wave'].includes(this.options.animation)) {
       const speed = Math.max(0.25, Number(this.options.motionSpeed) || 1);
@@ -335,9 +341,15 @@ export default class PopRenderer {
     if (options.transparentBg) ctx.clearRect(0, 0, W, H);
     else this._drawBackground(t);
     const speed = Math.max(0.25, Number(options.motionSpeed) || 0.7);
-    const step = 0.432;
-    const duration = Math.max(2, chunks.length * step);
-    const time = ((t * speed) % duration + duration) % duration;
+    const fixedDuration = Number(options.voiceoverDuration);
+    const hasFixedDuration = Number.isFinite(fixedDuration) && fixedDuration > 0;
+    const words = chunks.join(' ').split(/\s+/).filter(Boolean).length;
+    const duration = hasFixedDuration
+      ? Math.max(2, Math.min(600, fixedDuration))
+      : Math.max(2, words * 0.38) / speed;
+    const timelineSpeed = hasFixedDuration ? 1 : speed;
+    const step = duration / chunks.length;
+    const time = ((t * timelineSpeed) % duration + duration) % duration;
     const index = Math.floor(time / step) % chunks.length;
     const progress = Math.min(1, (time - index * step) / step);
     const renderItem = (itemIndex, itemProgress) => {
@@ -426,7 +438,14 @@ export default class PopRenderer {
     if (options.transparentBg) {
       ctx.clearRect(0, 0, W, H);
     } else if (options.animation === 'Motion Typography') {
-      const activeText = String(this._motionChunks()[Math.floor((t * Math.max(0.25, Number(options.motionSpeed) || 1)) / 0.432) % Math.max(1, this._motionChunks().length)] || '').toLowerCase();
+      const motionChunks = this._motionChunks();
+      const fixedDuration = Number(options.voiceoverDuration);
+      const hasFixedDuration = Number.isFinite(fixedDuration) && fixedDuration > 0;
+      const motionDuration = hasFixedDuration
+        ? Math.max(2, Math.min(600, fixedDuration))
+        : Math.max(2, motionChunks.length * 0.72);
+      const motionTime = t * (hasFixedDuration ? 1 : Math.max(0.25, Number(options.motionSpeed) || 1));
+      const activeText = String(motionChunks[Math.floor(motionTime / (motionDuration / Math.max(1, motionChunks.length))) % Math.max(1, motionChunks.length)] || '').toLowerCase();
       const flipWords = ['that', 'looks', 'feels', 'professional', 'skill', 'instantly'];
       const shouldFlip = flipWords.some((word) => activeText.includes(word));
       const customBackground = options.background && !['stars', 'galaxy', 'grid'].includes(options.background);
@@ -447,10 +466,16 @@ export default class PopRenderer {
     if (!chunks.length) return;
     const speed = Math.max(0.25, Number(options.motionSpeed) || 0.7);
     const durationPerChunk = 0.72;
-    const totalDuration = Math.max(2, chunks.length * durationPerChunk);
+    const fixedDuration = Number(options.voiceoverDuration);
+    const hasFixedDuration = Number.isFinite(fixedDuration) && fixedDuration > 0;
+    const totalDuration = hasFixedDuration
+      ? Math.max(2, Math.min(600, fixedDuration))
+      : Math.max(2, chunks.length * durationPerChunk);
     const overlap = 0.4;
-    const step = durationPerChunk * (1 - overlap);
-    const time = (((t * speed) % totalDuration) + totalDuration) % totalDuration;
+    const step = hasFixedDuration
+      ? totalDuration / chunks.length
+      : durationPerChunk * (1 - overlap);
+    const time = (((t * (hasFixedDuration ? 1 : speed)) % totalDuration) + totalDuration) % totalDuration;
     const easeOutBack = (x, overshoot = 1.4) => {
       const c3 = overshoot + 1;
       return 1 + c3 * ((x - 1) ** 3) + overshoot * ((x - 1) ** 2);

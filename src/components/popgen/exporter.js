@@ -38,7 +38,9 @@ export async function recordVideo(renderer, { duration, onProgress, transparentB
     : pickVideoMime();
   if (!mimeType) throw new Error('This browser cannot encode a supported video format');
   const requestedDuration = Number(duration);
-  const safeDuration = transparentBg ? Math.max(2, requestedDuration) : requestedDuration;
+  // CapCut and InShot can round a nominal two-second WebM down after encoder
+  // startup and timestamp quantization, so transparent clips need a safety margin.
+  const safeDuration = transparentBg ? Math.max(3, requestedDuration) : requestedDuration;
   if (!Number.isFinite(safeDuration) || safeDuration <= 0) throw new Error('Nothing to export');
 
   const stream = renderer.canvas.captureStream(30);

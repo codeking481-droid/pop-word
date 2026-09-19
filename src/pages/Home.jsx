@@ -87,6 +87,7 @@ export default function Home() {
     motionText: '',
     motionBgColor: '#FFEB00',
     motionSpeed: 0.7,
+    voiceoverDuration: 0,
     motionDirection: 'mixed',
     motionCleanBackground: true,
     hookBoost: false,

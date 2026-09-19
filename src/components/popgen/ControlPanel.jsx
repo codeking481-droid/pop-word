@@ -162,6 +162,20 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
           <input type="range" min="0.25" max="2.5" step="0.05" value={options.motionSpeed || 0.7} onChange={(e) => update({ motionSpeed: Number(e.target.value) })} className="pop-range mt-1 w-full" />
           <span className="flex justify-between text-[10px] text-white/30"><span>Slow</span><span>Fast</span></span>
         </label>
+        <label className="mt-2 block text-[11px] text-white/55">
+          Voiceover length (seconds) — {options.voiceoverDuration > 0 ? `${options.voiceoverDuration}s locked` : 'Auto estimate'}
+          <input
+            type="number"
+            min="0"
+            max="600"
+            step="0.1"
+            value={options.voiceoverDuration || ''}
+            onChange={(e) => update({ voiceoverDuration: Math.max(0, Math.min(600, Number(e.target.value) || 0)) })}
+            placeholder="e.g. 8.5"
+            className="mt-1 w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2.5 text-sm text-white outline-none focus:border-[#00FF62]"
+          />
+          <span className="mt-1 block text-[10px] text-white/30">Enter the exact voiceover duration to keep captions synced while changing visual speed.</span>
+        </label>
         <Label>Single style details</Label>
         <select
           value={options.animation}
@@ -398,9 +412,10 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
           <ToggleRow label="Show social safe zones" on={options.showSafeZones} onClick={() => update({ showSafeZones: !options.showSafeZones })} />
           <ToggleRow label="Transparent BG (PiP for CapCut)" on={options.transparentBg} onClick={() => update({ transparentBg: !options.transparentBg })} />
           {options.transparentBg && (
-            <p className="rounded-xl border border-[#00FF62]/20 bg-[#00FF62]/5 p-3 text-[11px] leading-relaxed text-white/60">
-              For CapCut/InShot: Import as overlay → PiP → Text will POP over your video with no background
-            </p>
+            <div className="rounded-xl border border-[#00FF62]/30 bg-[#00FF62]/[0.08] p-3 text-[11px] leading-relaxed text-white/70">
+              <div className="mb-1 font-bold text-[#00FF62]">TRANSPARENT OVERLAY READY</div>
+              Transparent clips export at 3 seconds minimum for CapCut/InShot compatibility. Import the downloaded WebM as an overlay/PiP; the checkerboard preview is only a guide and is not included in the file.
+            </div>
           )}
           <ToggleRow label="Auto-highlight key words" on={options.autoHighlight} onClick={() => update({ autoHighlight: !options.autoHighlight })} />
           {options.autoHighlight && (

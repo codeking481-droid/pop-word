@@ -31,7 +31,14 @@ visual guidance only and is never included in exported videos.
 
 For picture-in-picture captions, enable **Transparent BG (PiP for CapCut)**.
 The editor exports a VP9 WebM with a transparent canvas when the browser
-supports it; import that file as an overlay in CapCut or InShot.
+supports it. Transparent exports are recorded for at least three seconds so
+CapCut and InShot accept them as overlays; import the file as an overlay in
+either editor.
+
+To sync captions to an existing voiceover, enter its exact length in
+**Voiceover length (seconds)**. That locks the clip duration while the visual
+speed control changes only the animation feel. Leaving it blank uses an
+automatic speech-length estimate based on the script.
 
 The **Motion Typography Smooth** template defaults to `#FFEB00` with large,
 tight typography, alternating black/blue phrase emphasis, and smooth stacked
