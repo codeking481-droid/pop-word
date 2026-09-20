@@ -518,6 +518,7 @@ export default function Home() {
               onReady={(r) => (rendererRef.current = r)}
               onExportVideo={handleExportVideo}
               exporting={exporting}
+              onPositionChange={(textOffsetX, textOffsetY) => setOptions((current) => ({ ...current, textOffsetX, textOffsetY }))}
             />
           </div>
         </div>

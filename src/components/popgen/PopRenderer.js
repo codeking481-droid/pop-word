@@ -362,6 +362,9 @@ export default class PopRenderer {
     if (!chunks.length) return;
     if (options.transparentBg && options.exportBackground !== 'green') ctx.clearRect(0, 0, W, H);
     else this._drawBackground(t);
+    ctx.save();
+    this._positionTransformActive = true;
+    ctx.translate((Number(options.textOffsetX) || 0) * W / 100, (Number(options.textOffsetY) || 0) * H / 100);
     const speed = Math.max(0.25, Number(options.motionSpeed) || 0.7);
     const fixedDuration = Number(options.voiceoverDuration);
     const hasFixedDuration = Number.isFinite(fixedDuration) && fixedDuration > 0;
@@ -394,6 +397,8 @@ export default class PopRenderer {
     ctx.save();
     ctx.translate(0, H * 0.28 * (1 - progress));
     renderItem(index, progress);
+    ctx.restore();
+    this._positionTransformActive = false;
     ctx.restore();
   }
 
@@ -1037,8 +1042,10 @@ export default class PopRenderer {
 
     const tr = this._transform(anim, progress);
     tr.scale *= scaleMul;
-    tr.x += (Number(options.textOffsetX) || 0) * W / 100;
-    tr.y += (Number(options.textOffsetY) || 0) * H / 100;
+    if (!this._positionTransformActive) {
+      tr.x += (Number(options.textOffsetX) || 0) * W / 100;
+      tr.y += (Number(options.textOffsetY) || 0) * H / 100;
+    }
 
     if (['Green Box', 'Word Highlight', 'Caption Style', 'Stacked Bar'].includes(anim)) {
       this._renderBox(word, fontSize, color, tr, anim);

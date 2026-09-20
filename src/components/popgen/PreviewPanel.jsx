@@ -11,7 +11,7 @@ function fmt(s) {
   return `${m}:${sec.toString().padStart(2, '0')}`;
 }
 
-export default function PreviewPanel({ options, onReady, onExportVideo, exporting }) {
+export default function PreviewPanel({ options, onReady, onExportVideo, exporting, onPositionChange }) {
   const canvasRef = useRef(null);
   const rendererRef = useRef(null);
   const barRef = useRef(null);
@@ -20,6 +20,7 @@ export default function PreviewPanel({ options, onReady, onExportVideo, exportin
   const [speed, setSpeed] = useState(1);
   const [duration, setDuration] = useState(0);
   const durationRef = useRef(0);
+  const dragRef = useRef(null);
 
   useEffect(() => {
     const r = new PopRenderer(canvasRef.current, {
@@ -84,6 +85,41 @@ export default function PreviewPanel({ options, onReady, onExportVideo, exportin
     r.seek(t);
   };
 
+  const startPositionDrag = (e) => {
+    if (e.button !== 0 || !onPositionChange) return;
+    try {
+      e.currentTarget.setPointerCapture?.(e.pointerId);
+    } catch {
+      // Synthetic events and some mobile browsers do not expose an active pointer.
+    }
+    dragRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      offsetX: Number(options.textOffsetX) || 0,
+      offsetY: Number(options.textOffsetY) || 0,
+    };
+  };
+
+  const movePositionDrag = (e) => {
+    const drag = dragRef.current;
+    if (!drag || !onPositionChange) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const nextX = Math.max(-40, Math.min(40, drag.offsetX + ((e.clientX - drag.startX) / rect.width) * 100));
+    const nextY = Math.max(-40, Math.min(40, drag.offsetY + ((e.clientY - drag.startY) / rect.height) * 100));
+    onPositionChange(nextX, nextY);
+  };
+
+  const stopPositionDrag = (e) => {
+    if (dragRef.current) {
+      try {
+        e.currentTarget.releasePointerCapture?.(e.pointerId);
+      } catch {
+        // The pointer may already have been released by the browser.
+      }
+    }
+    dragRef.current = null;
+  };
+
   const busyType = exporting?.type;
   const isBusy = (t) => exporting && busyType === t;
 
@@ -111,6 +147,11 @@ export default function PreviewPanel({ options, onReady, onExportVideo, exportin
           <div
             className="relative w-full overflow-hidden rounded-[1.4rem] bg-black"
             style={{ aspectRatio }}
+            onPointerDown={startPositionDrag}
+            onPointerMove={movePositionDrag}
+            onPointerUp={stopPositionDrag}
+            onPointerCancel={stopPositionDrag}
+            title="Drag the popup text to position it"
           >
             <canvas ref={canvasRef} className="h-full w-full" />
             {options.showSafeZones && (
