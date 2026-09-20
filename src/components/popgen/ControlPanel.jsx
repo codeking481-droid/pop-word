@@ -75,8 +75,9 @@ function MediaThumb({ item }) {
   return <img src={item.url} alt="" className="h-full w-full object-cover" />;
 }
 
-export default function ControlPanel({ options, setOptions, onGenerate, exporting, onAddMedia, onSelectMedia, onRemoveMedia, onApplyPreset, batchScripts, setBatchScripts, onGenerateBatch, batchProgress, onMultiExport, multiExporting, isPro = false }) {
+export default function ControlPanel({ options, setOptions, onGenerate, exporting, onAddMedia, onSelectMedia, onRemoveMedia, onAddVoiceover, onRemoveVoiceover, onApplyPreset, batchScripts, setBatchScripts, onGenerateBatch, batchProgress, onMultiExport, multiExporting, isPro = false }) {
   const fileRef = useRef(null);
+  const voiceoverRef = useRef(null);
   const [dragging, setDragging] = useState(false);
   const [tab, setTab] = useState('pop');
   const busy = !!exporting;
@@ -145,6 +146,39 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
         <div className="mt-1.5 text-right text-xs text-white/40">
           {options.script.trim() ? options.script.trim().split(/\s+/).filter(Boolean).length : 0} words
         </div>
+      </section>
+
+      <section className="rounded-2xl border border-[#00FF62]/35 bg-[#00FF62]/[0.06] p-3 shadow-[0_0_24px_-12px_rgba(0,255,98,0.65)]">
+        <Label icon={<Film className="h-4 w-4 text-[#00FF62]" />}>Voiceover</Label>
+        <input ref={voiceoverRef} type="file" accept="audio/*" className="hidden" onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file && onAddVoiceover) onAddVoiceover(file);
+          e.target.value = '';
+        }} />
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => voiceoverRef.current?.click()}
+            className="rounded-xl border border-[#00FF62]/35 bg-[#00FF62]/10 px-3 py-2 text-xs font-semibold text-[#00FF62] transition hover:bg-[#00FF62]/15"
+          >
+            {options.voiceover ? 'Replace audio' : 'Upload audio'}
+          </button>
+          {options.voiceover && (
+            <button
+              type="button"
+              onClick={() => onRemoveVoiceover?.()}
+              className="rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-xs font-semibold text-white/75 transition hover:text-white"
+            >
+              Remove
+            </button>
+          )}
+        </div>
+        {options.voiceover && (
+          <div className="mt-3 rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-[11px] text-white/70">
+            <div className="font-semibold text-white">{options.voiceover.name}</div>
+            <div className="mt-1 text-white/50">Ready to play with the preview timeline</div>
+          </div>
+        )}
       </section>
 
       <section className="rounded-2xl border border-[#00FF62]/35 bg-[#00FF62]/[0.06] p-3 shadow-[0_0_24px_-12px_rgba(0,255,98,0.65)]">

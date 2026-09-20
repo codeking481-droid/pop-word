@@ -64,6 +64,10 @@ export default function PreviewPanel({ options, onReady, onExportVideo, exportin
     rendererRef.current?.setCustomMedia(options.customMedia || null);
   }, [options.customMedia]);
 
+  useEffect(() => {
+    rendererRef.current?.setVoiceover(options.voiceover?.element || null);
+  }, [options.voiceover]);
+
   const togglePlay = () => {
     const r = rendererRef.current;
     if (!r) return;
@@ -86,7 +90,8 @@ export default function PreviewPanel({ options, onReady, onExportVideo, exportin
   };
 
   const startPositionDrag = (e) => {
-    if (e.button !== 0 || !onPositionChange) return;
+    if (!onPositionChange) return;
+    e.preventDefault();
     try {
       e.currentTarget.setPointerCapture?.(e.pointerId);
     } catch {
@@ -146,7 +151,7 @@ export default function PreviewPanel({ options, onReady, onExportVideo, exportin
           )}
           <div
             className="relative w-full overflow-hidden rounded-[1.4rem] bg-black"
-            style={{ aspectRatio }}
+            style={{ aspectRatio, touchAction: 'none', userSelect: 'none' }}
             onPointerDown={startPositionDrag}
             onPointerMove={movePositionDrag}
             onPointerUp={stopPositionDrag}

@@ -56,6 +56,7 @@ export default function Home() {
     aspect: '9:16',
     customMedia: null,
     mediaLibrary: [],
+    voiceover: null,
     showProgressbar: true,
     showSafeZones: false,
     autoHighlight: false,
@@ -192,6 +193,7 @@ export default function Home() {
     for (const card of optionsRef.current.minimalCards || []) {
       if (card.url) URL.revokeObjectURL(card.url);
     }
+    if (optionsRef.current.voiceover?.url) URL.revokeObjectURL(optionsRef.current.voiceover.url);
     ownedUrlsRef.current.clear();
   }, []);
 
@@ -338,6 +340,38 @@ export default function Home() {
   };
 
   const applyPreset = (patch) => setOptions((o) => ({ ...o, ...patch }));
+
+  const addVoiceover = (file) => {
+    if (!file || !file.type?.startsWith('audio/')) {
+      toast.error('Please upload a valid audio file for the voiceover.');
+      return;
+    }
+    const url = URL.createObjectURL(file);
+    const audio = new Audio();
+    audio.src = url;
+    audio.preload = 'auto';
+    audio.playsInline = true;
+    audio.crossOrigin = 'anonymous';
+    ownedUrlsRef.current.add(url);
+    const metadataHandler = () => {
+      if (Number.isFinite(audio.duration) && audio.duration > 0) {
+        setOptions((current) => ({ ...current, voiceoverDuration: Math.max(2, audio.duration) }));
+      }
+    };
+    audio.addEventListener('loadedmetadata', metadataHandler, { once: true });
+    setOptions((current) => ({ ...current, voiceover: { id: globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`, url, name: file.name, element: audio } }));
+  };
+
+  const removeVoiceover = () => {
+    setOptions((current) => {
+      const voiceover = current.voiceover;
+      if (voiceover?.url) {
+        URL.revokeObjectURL(voiceover.url);
+        ownedUrlsRef.current.delete(voiceover.url);
+      }
+      return { ...current, voiceover: null };
+    });
+  };
 
   const handleGenerate = async () => {
     const ctx = ensureScript();
@@ -502,6 +536,8 @@ export default function Home() {
               onAddMedia={addMedia}
               onSelectMedia={selectMedia}
               onRemoveMedia={removeMedia}
+              onAddVoiceover={addVoiceover}
+              onRemoveVoiceover={removeVoiceover}
               onApplyPreset={applyPreset}
               batchScripts={batchScripts}
               setBatchScripts={setBatchScripts}

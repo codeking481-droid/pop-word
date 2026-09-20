@@ -30,6 +30,7 @@ export default class PopRenderer {
     this.startTime = 0;
     this.pausedAt = 0;
     this.customMedia = null;
+    this.voiceover = null;
     this._mediaLoadHandler = null;
     this.bgImage = null;
     this.brandLogoImg = null;
@@ -126,6 +127,22 @@ export default class PopRenderer {
     }
   }
 
+  setVoiceover(audio) {
+    if (this.voiceover && this.voiceover !== audio) {
+      this.voiceover.pause();
+      this.voiceover.currentTime = 0;
+    }
+    this.voiceover = audio || null;
+    if (this.voiceover) {
+      this.voiceover.pause();
+      this.voiceover.currentTime = 0;
+    }
+    if (!this.playing) {
+      this._draw(this.currentTime);
+      if (this.onTimeUpdate) this.onTimeUpdate(this.currentTime, this.getDuration());
+    }
+  }
+
   getWords() {
     const text = (this.options.script || '').trim();
     const key = (this.options.uppercase ? 'U' : 'u') + '|' + text;
@@ -138,6 +155,9 @@ export default class PopRenderer {
   }
 
   getDuration() {
+    if (this.voiceover && Number.isFinite(this.voiceover.duration) && this.voiceover.duration > 0) {
+      return Math.max(2, Math.min(3600, this.voiceover.duration));
+    }
     if (this.customMedia?.tagName === 'VIDEO' && Number.isFinite(this.customMedia.duration) && this.customMedia.duration > 0) {
       return Math.min(120, this.customMedia.duration);
     }
@@ -193,6 +213,11 @@ export default class PopRenderer {
       if (Number.isFinite(this.customMedia.duration)) this.customMedia.currentTime = Math.min(this.pausedAt, Math.max(0, this.customMedia.duration - 0.01));
       this.customMedia.play().catch(() => {});
     }
+    if (this.voiceover) {
+      const maxDuration = Number.isFinite(this.voiceover.duration) ? this.voiceover.duration : this.pausedAt;
+      this.voiceover.currentTime = Math.min(Math.max(this.pausedAt, 0), maxDuration);
+      this.voiceover.play().catch(() => {});
+    }
     this.playing = true;
     this.lastFrameTime = 0;
     this.startTime = performance.now() - (this.pausedAt * 1000) / this.speed;
@@ -207,6 +232,7 @@ export default class PopRenderer {
     this.raf = null;
     this.pausedAt = current;
     if (this.customMedia && this.customMedia.tagName === 'VIDEO') this.customMedia.pause();
+    if (this.voiceover) this.voiceover.pause();
   }
 
   toggle() { this.playing ? this.pause() : this.play(); }
@@ -218,6 +244,9 @@ export default class PopRenderer {
     this.pausedAt = position;
     if (this.customMedia?.tagName === 'VIDEO' && Number.isFinite(this.customMedia.duration)) {
       this.customMedia.currentTime = Math.min(position, Math.max(0, this.customMedia.duration - 0.01));
+    }
+    if (this.voiceover && Number.isFinite(this.voiceover.duration)) {
+      this.voiceover.currentTime = Math.min(position, Math.max(0, this.voiceover.duration - 0.01));
     }
     if (this.playing) this.startTime = performance.now() - (position * 1000) / this.speed;
     this._draw(position);
@@ -241,7 +270,12 @@ export default class PopRenderer {
       this.customMedia.removeEventListener('loadedmetadata', this._mediaLoadHandler);
       this.customMedia.removeEventListener('load', this._mediaLoadHandler);
     }
+    if (this.voiceover) {
+      this.voiceover.pause();
+      this.voiceover.currentTime = 0;
+    }
     this.customMedia = null;
+    this.voiceover = null;
     this._mediaLoadHandler = null;
     this.bgImage = null;
     this.brandLogoImg = null;
