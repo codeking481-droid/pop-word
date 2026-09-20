@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Sparkles, Upload, Wand2, Film, X, Image as ImageIcon, Plus } from 'lucide-react';
 import PresetTemplates from './PresetTemplates';
 import BatchPanel from './BatchPanel';
@@ -68,6 +68,20 @@ const COMBINE_STYLES = [
   { id: 'aestheticSerif', label: 'Aesthetic Serif / Apple Minimal', detail: 'Elegant serif' },
 ];
 
+function parseDuration(value) {
+  const input = String(value || '').trim();
+  if (!input) return 0;
+  if (input.includes(':')) {
+    const parts = input.split(':').map(Number);
+    if (parts.some((part) => !Number.isFinite(part) || part < 0)) return 0;
+    if (parts.length === 2) return Math.min(3600, parts[0] * 60 + parts[1]);
+    if (parts.length === 3) return Math.min(3600, parts[0] * 3600 + parts[1] * 60 + parts[2]);
+    return 0;
+  }
+  const seconds = Number(input);
+  return Number.isFinite(seconds) ? Math.max(0, Math.min(3600, seconds)) : 0;
+}
+
 function MediaThumb({ item }) {
   if (item.type === 'video') {
     return <video src={item.url} muted playsInline preload="metadata" className="h-full w-full object-cover" />;
@@ -80,9 +94,20 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
   const voiceoverRef = useRef(null);
   const [dragging, setDragging] = useState(false);
   const [tab, setTab] = useState('pop');
+  const [durationDraft, setDurationDraft] = useState('');
   const busy = !!exporting;
 
   const update = (patch) => setOptions((current) => ({ ...current, ...patch }));
+
+  useEffect(() => {
+    if (options.voiceoverDuration > 0) {
+      const minutes = Math.floor(options.voiceoverDuration / 60);
+      const seconds = Math.round(options.voiceoverDuration % 60);
+      setDurationDraft(`${minutes}:${String(seconds).padStart(2, '0')}`);
+    } else if (!options.voiceoverDuration) {
+      setDurationDraft('');
+    }
+  }, [options.voiceoverDuration]);
 
   const openPicker = () => fileRef.current?.click();
 
@@ -215,18 +240,25 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
           <span className="flex justify-between text-[10px] text-white/30"><span>Slow</span><span>Fast</span></span>
         </label>
         <label className="mt-2 block text-[11px] text-white/55">
-          Voiceover length (seconds) — {options.voiceoverDuration > 0 ? `${options.voiceoverDuration}s locked` : 'Auto estimate'}
+          Voiceover / export length — {options.voiceoverDuration > 0 ? `${Math.floor(options.voiceoverDuration / 60)}:${String(Math.round(options.voiceoverDuration % 60)).padStart(2, '0')} locked` : 'Auto estimate'}
           <input
-            type="number"
+            type="text"
             min="0"
             max="3600"
-            step="0.1"
-            value={options.voiceoverDuration || ''}
-            onChange={(e) => update({ voiceoverDuration: Math.max(0, Math.min(3600, Number(e.target.value) || 0)) })}
-            placeholder="e.g. 8.5"
+            value={durationDraft}
+            onChange={(e) => {
+              setDurationDraft(e.target.value);
+            }}
+            onBlur={() => update({ voiceoverDuration: parseDuration(durationDraft) })}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.currentTarget.blur();
+              }
+            }}
+            placeholder="e.g. 2:30 or 150"
             className="mt-1 w-full rounded-xl border border-white/10 bg-black/40 px-3 py-2.5 text-sm text-white outline-none focus:border-[#00FF62]"
           />
-          <span className="mt-1 block text-[10px] text-white/30">Supports voiceovers from 2 seconds up to 60 minutes. Enter the exact length to keep captions synced while changing visual speed.</span>
+          <span className="mt-1 block text-[10px] text-white/30">Enter the exact voiceover length, such as 2:30. Uploading audio detects this automatically; leaving it blank estimates from your script.</span>
         </label>
         <Label>Single style details</Label>
         <select

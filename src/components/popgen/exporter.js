@@ -126,14 +126,17 @@ export async function recordVideo(renderer, { duration, onProgress, transparentB
       const elapsed = (performance.now() - start) / 1000;
       onProgress?.(Math.min(1, elapsed / safeDuration));
       if (elapsed < safeDuration + 0.25 && !settled) frame = requestAnimationFrame(tick);
-      else if (recorder.state !== 'inactive') recorder.stop();
+      else if (recorder.state !== 'inactive') {
+        recorder.requestData?.();
+        recorder.stop();
+      }
     };
     frame = requestAnimationFrame(tick);
     recorder.onstop = () => {
       if (settled) return;
       settled = true;
       cleanup();
-      resolve(new Blob(chunks, { type: mimeType }));
+      resolve(new Blob(chunks, { type: recorder.mimeType || mimeType }));
     };
     recorder.onerror = (event) => fail(event.error || new Error('Video recording failed'));
   });

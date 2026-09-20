@@ -353,6 +353,11 @@ export default function Home() {
     audio.playsInline = true;
     audio.crossOrigin = 'anonymous';
     ownedUrlsRef.current.add(url);
+    const previousUrl = optionsRef.current.voiceover?.url;
+    if (previousUrl) {
+      URL.revokeObjectURL(previousUrl);
+      ownedUrlsRef.current.delete(previousUrl);
+    }
     const metadataHandler = () => {
       if (Number.isFinite(audio.duration) && audio.duration > 0) {
         setOptions((current) => ({ ...current, voiceoverDuration: Math.max(2, audio.duration) }));

@@ -956,17 +956,25 @@ export default class PopRenderer {
     const words = this.getWords();
     const dur = this.options.wordDuration || 0.4;
     const wordsDur = words.length * dur;
+    const fixedDuration = Number(this.options.voiceoverDuration);
+    const hasFixedDuration = Number.isFinite(fixedDuration) && fixedDuration > 0;
+    const requestedDuration = hasFixedDuration
+      ? Math.max(2, Math.min(3600, fixedDuration))
+      : wordsDur;
+    const ctaDuration = this.options.ctaEnabled && this.options.ctaText ? 2 : 0;
+    const textDuration = Math.max(0.01, requestedDuration - ctaDuration);
 
-    if (this.options.ctaEnabled && this.options.ctaText && t >= wordsDur) {
-      this._renderCTA(t - wordsDur);
+    if (this.options.ctaEnabled && this.options.ctaText && t >= textDuration) {
+      this._renderCTA(t - textDuration);
       return;
     }
     if (!words.length) { this._drawHint(); return; }
 
-    let tt = wordsDur > 0 ? t % wordsDur : 0;
-    const idx = Math.min(words.length - 1, Math.floor(tt / dur));
-    const localT = tt - idx * dur;
-    const progress = dur > 0 ? localT / dur : 1;
+    const step = hasFixedDuration ? textDuration / words.length : dur;
+    const tt = hasFixedDuration ? Math.min(t, textDuration - 0.001) : (wordsDur > 0 ? t % wordsDur : 0);
+    const idx = Math.min(words.length - 1, Math.floor(tt / step));
+    const localT = tt - idx * step;
+    const progress = step > 0 ? localT / step : 1;
 
     const cat = this.options.autoKeywordStyles ? wordCategory(words[idx]) : null;
     const isHook = this.options.hookBoost && idx < 3;
