@@ -29,6 +29,17 @@ single, batch, or multi-format export consumes one trial export. Once
 The editor also includes an optional Social safe zones preview overlay. It is
 visual guidance only and is never included in exported videos.
 
+Upload a source video up to two minutes from **Your Media**, select it, enter
+your popup/caption script, and export. The selected video's duration becomes
+the master timeline; seeking, preview playback, and the exported MP4 stay
+synchronized with the source video. Videos longer than two minutes are
+rejected so exports remain practical on phones.
+
+When a source video is selected, enabling the overlay toggle exports the
+caption animation composited directly into that video as one H.264 MP4. If no
+source video is selected, the same toggle creates the mobile Chroma Key MP4
+overlay described below.
+
 For a mobile caption overlay, enable **Mobile overlay (Chroma Key MP4)**.
 The editor exports a standard H.264 MP4 with the animated words over a bright
 green background. Add that MP4 as an overlay in CapCut or InShot, choose

@@ -107,12 +107,17 @@ export default class PopRenderer {
     }
     if (this.customMedia && this._mediaLoadHandler) {
       this.customMedia.removeEventListener('loadeddata', this._mediaLoadHandler);
+      this.customMedia.removeEventListener('loadedmetadata', this._mediaLoadHandler);
       this.customMedia.removeEventListener('load', this._mediaLoadHandler);
     }
     this.customMedia = media;
     if (media && typeof media.addEventListener === 'function') {
-      this._mediaLoadHandler = () => { if (!this.playing) this._draw(this.currentTime); };
+      this._mediaLoadHandler = () => {
+        if (!this.playing) this._draw(this.currentTime);
+        if (this.onTimeUpdate) this.onTimeUpdate(this.currentTime, this.getDuration());
+      };
       media.addEventListener('loadeddata', this._mediaLoadHandler, { once: true });
+      media.addEventListener('loadedmetadata', this._mediaLoadHandler, { once: true });
       media.addEventListener('load', this._mediaLoadHandler, { once: true });
     }
     if (!this.playing) {
@@ -133,6 +138,9 @@ export default class PopRenderer {
   }
 
   getDuration() {
+    if (this.customMedia?.tagName === 'VIDEO' && Number.isFinite(this.customMedia.duration) && this.customMedia.duration > 0) {
+      return Math.min(120, this.customMedia.duration);
+    }
     const template = this.options.template || this.options.mode;
     const selectedStyles = this.options.selectedStyles || [];
     const voiceoverDuration = Number(this.options.voiceoverDuration);
@@ -181,7 +189,10 @@ export default class PopRenderer {
 
   play() {
     if (this.playing) return;
-    if (this.customMedia && this.customMedia.tagName === 'VIDEO') this.customMedia.play().catch(() => {});
+    if (this.customMedia && this.customMedia.tagName === 'VIDEO') {
+      if (Number.isFinite(this.customMedia.duration)) this.customMedia.currentTime = Math.min(this.pausedAt, Math.max(0, this.customMedia.duration - 0.01));
+      this.customMedia.play().catch(() => {});
+    }
     this.playing = true;
     this.lastFrameTime = 0;
     this.startTime = performance.now() - (this.pausedAt * 1000) / this.speed;
@@ -205,6 +216,9 @@ export default class PopRenderer {
     const next = Number.isFinite(Number(t)) ? Math.max(0, Number(t)) : 0;
     const position = dur > 0 && next >= dur ? 0 : next;
     this.pausedAt = position;
+    if (this.customMedia?.tagName === 'VIDEO' && Number.isFinite(this.customMedia.duration)) {
+      this.customMedia.currentTime = Math.min(position, Math.max(0, this.customMedia.duration - 0.01));
+    }
     if (this.playing) this.startTime = performance.now() - (position * 1000) / this.speed;
     this._draw(position);
     if (this.onTimeUpdate) this.onTimeUpdate(position, dur);
@@ -224,6 +238,7 @@ export default class PopRenderer {
     this.onTimeUpdate = null;
     if (this.customMedia && this._mediaLoadHandler) {
       this.customMedia.removeEventListener('loadeddata', this._mediaLoadHandler);
+      this.customMedia.removeEventListener('loadedmetadata', this._mediaLoadHandler);
       this.customMedia.removeEventListener('load', this._mediaLoadHandler);
     }
     this.customMedia = null;
@@ -251,6 +266,9 @@ export default class PopRenderer {
     let t = this.currentTime;
     const dur = this.getDuration();
     if (dur > 0 && t >= dur) { t = 0; this.startTime = performance.now(); this.pausedAt = 0; }
+    if (this.customMedia?.tagName === 'VIDEO' && this.customMedia.readyState >= 2) {
+      if (Math.abs(this.customMedia.currentTime - t) > 0.08) this.customMedia.currentTime = t;
+    }
     this._draw(t);
     if (this.onTimeUpdate) this.onTimeUpdate(t, dur);
     this.raf = requestAnimationFrame(this._loop);

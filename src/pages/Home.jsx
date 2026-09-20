@@ -279,7 +279,7 @@ export default function Home() {
         element = document.createElement('video');
         element.src = url;
         element.muted = true;
-        element.loop = true;
+        element.loop = false;
         element.playsInline = true;
         element.preload = 'auto';
         element.load();
@@ -295,7 +295,29 @@ export default function Home() {
         name: file.name,
       };
     });
-    setOptions((o) => ({ ...o, mediaLibrary: [...(o.mediaLibrary || []), ...items] }));
+    const firstVideo = items.find((item) => item.type === 'video');
+    setOptions((o) => ({
+      ...o,
+      mediaLibrary: [...(o.mediaLibrary || []), ...items],
+      ...(firstVideo && !o.customMedia ? { background: 'custom', customMedia: firstVideo.element } : {}),
+    }));
+    items.filter((item) => item.type === 'video').forEach((item) => {
+      item.element.addEventListener('loadedmetadata', () => {
+        if (!Number.isFinite(item.element.duration) || item.element.duration <= 120) return;
+        setOptions((current) => {
+          const mediaLibrary = (current.mediaLibrary || []).filter((entry) => entry.id !== item.id);
+          const patch = { mediaLibrary };
+          if (current.customMedia === item.element) {
+            patch.customMedia = null;
+            patch.background = 'stars';
+          }
+          return { ...current, ...patch };
+        });
+        URL.revokeObjectURL(item.url);
+        ownedUrlsRef.current.delete(item.url);
+        toast.error(`${item.name} is longer than 2 minutes. Please choose a shorter video.`);
+      }, { once: true });
+    });
   };
 
   const selectMedia = (item) => {
@@ -326,7 +348,7 @@ export default function Home() {
     if (!ctx) return;
     if (!canTrialExport()) return;
     const transparentExport = false;
-    const greenScreenExport = options.transparentBg;
+    const greenScreenExport = options.transparentBg && options.customMedia?.tagName !== 'VIDEO';
     setExporting({ type: greenScreenExport ? 'MP4' : 'VIDEO', progress: 0 });
     try {
       const blob = await recordVideo(ctx.r, {
@@ -358,7 +380,7 @@ export default function Home() {
     const renderer = rendererRef.current;
     if (!renderer) { toast.error('Preview is still loading'); return; }
     const transparentExport = false;
-    const greenScreenExport = options.transparentBg;
+    const greenScreenExport = options.transparentBg && options.customMedia?.tagName !== 'VIDEO';
     setBatchProgress({ current: 0, total: scripts.length });
     setExporting({ type: 'BATCH', progress: 0 });
     try {
@@ -401,7 +423,7 @@ export default function Home() {
     const ctx = ensureScript();
     if (!ctx) return;
     const transparentExport = false;
-    const greenScreenExport = options.transparentBg;
+    const greenScreenExport = options.transparentBg && options.customMedia?.tagName !== 'VIDEO';
     setMultiExporting(true);
     const aspects = ['9:16', '1:1', '4:5', '16:9'];
     const original = options.aspect;
