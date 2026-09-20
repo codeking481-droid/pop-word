@@ -1037,8 +1037,10 @@ export default class PopRenderer {
 
     const tr = this._transform(anim, progress);
     tr.scale *= scaleMul;
+    tr.x += (Number(options.textOffsetX) || 0) * W / 100;
+    tr.y += (Number(options.textOffsetY) || 0) * H / 100;
 
-    if (['Green Box', 'Word Highlight', 'Caption Style'].includes(anim)) {
+    if (['Green Box', 'Word Highlight', 'Caption Style', 'Stacked Bar'].includes(anim)) {
       this._renderBox(word, fontSize, color, tr, anim);
       this._drawCounter(idx, total);
       return;
@@ -1059,6 +1061,22 @@ export default class PopRenderer {
     this._drawEmoji(word, fontSize, forceEmoji);
 
     if (anim === 'Typewriter') this._renderTypewriter(word, fontSize, color, tr.glow, progress);
+    else if (anim === 'Classic Bounce') this._renderClassicBounce(word, fontSize, color, tr.glow, progress);
+    else if (anim === 'Karaoke Fill') this._renderKaraoke(word, fontSize, color, tr.glow, progress);
+    else if (anim === 'Glitch / Datamosh') this._renderGlitch(word, fontSize, color, progress);
+    else if (anim === 'Neon Glow') this._renderNeon(word, fontSize, color, progress);
+    else if (anim === 'Gradient Sweep') this._renderShimmer(word, fontSize, color, tr.glow, progress);
+    else if (anim === 'Outline Chase') this._renderOutlineChase(word, fontSize, color, progress);
+    else if (anim === 'Blur In / Focus Pull') this._renderBlurIn(word, fontSize, color, progress);
+    else if (anim === '3D Extrude') this._renderExtrude(word, fontSize, color, progress);
+    else if (anim === 'Liquid / Wobble') this._renderWave(word, fontSize, weight, family, color, tr.glow, progress);
+    else if (anim === 'Handwritten Reveal') this._renderHandwritten(word, fontSize, color, progress);
+    else if (anim === 'Bold Impact / Word Slam') this._renderImpact(word, fontSize, color, progress);
+    else if (anim === 'Split Reveal') this._renderSplit(word, fontSize, color, progress);
+    else if (anim === 'Mask Wipe') this._renderMask(word, fontSize, color, progress);
+    else if (anim === 'Flip / Rotate In') this._renderFlip(word, fontSize, color, progress);
+    else if (anim === 'Echo / Trail') this._renderTrail(word, fontSize, color, progress);
+    else if (anim === 'Fire / Smoke / Particle') this._renderParticles(word, fontSize, color, progress);
     else if (anim === 'Wave') this._renderWave(word, fontSize, weight, family, color, tr.glow, progress);
     else if (anim === 'Glitch') this._renderGlitch(word, fontSize, color, progress);
     else if (anim === 'Karaoke') this._renderKaraoke(word, fontSize, color, tr.glow, progress);
@@ -1080,6 +1098,7 @@ export default class PopRenderer {
     if (anim === 'Caption Style') return 'rgba(0,0,0,0.8)';
     if (anim === 'Word Highlight') return brand || options.bgColor || '#00FF62';
     if (anim === 'Green Box') return brand || options.bgColor || '#00C853';
+    if (anim === 'Stacked Bar') return brand || '#FFB703';
     return options.bgColor || '#00C853';
   }
 
@@ -1098,6 +1117,7 @@ export default class PopRenderer {
     if (anim === 'Caption Style') { cy = H * 0.82; textColor = options.textColor || '#FFFFFF'; }
     if (anim === 'Word Highlight') textColor = '#0A0A0A';
     if (anim === 'Green Box') textColor = '#FFFFFF';
+    if (anim === 'Stacked Bar') textColor = '#0A0A0A';
 
     ctx.save();
     ctx.translate(cx + tr.x, cy + tr.y);
@@ -1255,6 +1275,93 @@ export default class PopRenderer {
       }
       lineY += lineH;
     }
+  }
+
+  _renderClassicBounce(word, fontSize, color, glow, progress) {
+    const { ctx } = this;
+    const p = Math.min(1, progress * 1.25);
+    const bounce = p < 0.72 ? 1.18 - Math.sin(p * Math.PI) * 0.18 : 1 + Math.sin((p - 0.72) * Math.PI * 4) * 0.04;
+    ctx.save(); ctx.scale(bounce, bounce); ctx.shadowColor = color; ctx.shadowBlur = glow;
+    ctx.fillStyle = color; ctx.fillText(word, 0, 0); ctx.restore();
+  }
+
+  _renderNeon(word, fontSize, color, progress) {
+    const { ctx } = this;
+    const flicker = progress < 0.22 ? (Math.floor(progress * 35) % 3 ? 0.25 : 1) : 0.85 + Math.sin(progress * Math.PI * 2) * 0.15;
+    ctx.globalAlpha *= flicker; ctx.shadowColor = color; ctx.shadowBlur = 12 + flicker * 28;
+    ctx.fillStyle = color; ctx.fillText(word, 0, 0);
+  }
+
+  _renderOutlineChase(word, fontSize, color, progress) {
+    const { ctx } = this;
+    const width = ctx.measureText(word).width;
+    ctx.lineWidth = Math.max(3, fontSize * 0.045); ctx.strokeStyle = color; ctx.strokeText(word, 0, 0);
+    ctx.save(); ctx.beginPath(); ctx.rect(-width / 2, -fontSize, width * Math.min(1, progress * 1.3), fontSize * 2); ctx.clip();
+    ctx.fillStyle = color; ctx.fillText(word, 0, 0); ctx.restore();
+  }
+
+  _renderBlurIn(word, fontSize, color, progress) {
+    const { ctx } = this;
+    ctx.save(); ctx.filter = `blur(${Math.max(0, (1 - progress) * fontSize * 0.12)}px)`;
+    ctx.globalAlpha *= Math.min(1, progress * 1.5); ctx.fillStyle = color; ctx.fillText(word, 0, 0); ctx.restore();
+  }
+
+  _renderExtrude(word, fontSize, color, progress) {
+    const { ctx } = this;
+    const depth = Math.max(3, fontSize * 0.045);
+    for (let i = 7; i > 0; i--) { ctx.fillStyle = `rgba(0,0,0,${0.12 + i * 0.04})`; ctx.fillText(word, i * depth * 0.45, i * depth * 0.45); }
+    ctx.fillStyle = color; ctx.shadowColor = color; ctx.shadowBlur = 14; ctx.fillText(word, 0, 0);
+  }
+
+  _renderSplit(word, fontSize, color, progress) {
+    const { ctx } = this;
+    const width = ctx.measureText(word).width;
+    ctx.save(); ctx.fillStyle = color;
+    ctx.beginPath(); ctx.rect(-width / 2, -fontSize, width / 2 + width * progress / 2, fontSize * 2); ctx.clip(); ctx.fillText(word, -width * (1 - progress) * 0.18, 0); ctx.restore();
+    ctx.save(); ctx.beginPath(); ctx.rect(0, -fontSize, width / 2 + width * progress / 2, fontSize * 2); ctx.clip(); ctx.fillText(word, width * (1 - progress) * 0.18, 0); ctx.restore();
+  }
+
+  _renderMask(word, fontSize, color, progress) {
+    const { ctx } = this;
+    const width = ctx.measureText(word).width;
+    ctx.save(); ctx.beginPath(); ctx.rect(-width / 2, -fontSize, width * Math.min(1, progress * 1.15), fontSize * 2); ctx.clip();
+    ctx.fillStyle = color; ctx.fillText(word, 0, 0); ctx.restore();
+  }
+
+  _renderFlip(word, fontSize, color, progress) {
+    const { ctx } = this;
+    ctx.save(); ctx.scale(1, Math.max(0.04, Math.abs(Math.cos(progress * Math.PI)))); ctx.fillStyle = color; ctx.fillText(word, 0, 0); ctx.restore();
+  }
+
+  _renderTrail(word, fontSize, color, progress) {
+    const { ctx } = this;
+    for (let i = 5; i > 0; i--) { ctx.globalAlpha *= 0.1; ctx.fillStyle = color; ctx.fillText(word, -i * fontSize * 0.035, 0); }
+    ctx.globalAlpha /= 0.1 ** 5; ctx.fillStyle = color; ctx.shadowColor = color; ctx.shadowBlur = 12; ctx.fillText(word, 0, 0);
+  }
+
+  _renderParticles(word, fontSize, color, progress) {
+    const { ctx } = this;
+    ctx.fillStyle = color; ctx.shadowColor = color; ctx.shadowBlur = 18; ctx.fillText(word, 0, 0);
+    for (let i = 0; i < 18; i++) {
+      const angle = i * 2.4; const radius = fontSize * (0.35 + progress * 0.8) * ((i % 5) / 5 + 0.5);
+      ctx.globalAlpha = Math.max(0, 1 - progress) * 0.8; ctx.fillRect(Math.cos(angle) * radius, Math.sin(angle) * radius, Math.max(3, fontSize * 0.025), Math.max(3, fontSize * 0.025));
+    }
+  }
+
+  _renderHandwritten(word, fontSize, color, progress) {
+    const { ctx } = this;
+    const reveal = Math.min(1, progress * 1.25);
+    ctx.save(); ctx.font = `700 italic ${fontSize}px "Comic Sans MS", cursive`; ctx.globalAlpha *= reveal;
+    ctx.strokeStyle = color; ctx.lineWidth = Math.max(2, fontSize * 0.025); ctx.strokeText(word, 0, 0);
+    ctx.fillStyle = color; ctx.fillText(word.slice(0, Math.max(1, Math.ceil(word.length * reveal))), 0, 0); ctx.restore();
+  }
+
+  _renderImpact(word, fontSize, color, progress) {
+    const { ctx } = this;
+    const flash = progress < 0.16 ? (1 - progress / 0.16) * 0.35 : 0;
+    if (flash) { ctx.fillStyle = `rgba(255,255,255,${flash})`; ctx.fillRect(-this.W, -this.H, this.W * 2, this.H * 2); }
+    ctx.save(); ctx.scale(0.65 + Math.min(1, progress * 2) * 0.35, 0.65 + Math.min(1, progress * 2) * 0.35);
+    ctx.fillStyle = color; ctx.shadowColor = color; ctx.shadowBlur = 24; ctx.fillText(word, 0, 0); ctx.restore();
   }
 
   _renderTypewriter(word, fontSize, color, glow, progress) {

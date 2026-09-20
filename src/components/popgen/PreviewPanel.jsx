@@ -109,15 +109,10 @@ export default function PreviewPanel({ options, onReady, onExportVideo, exportin
             <div className="absolute left-1/2 top-0 z-10 h-6 w-28 -translate-x-1/2 rounded-b-2xl bg-[#1c1c1c]" />
           )}
           <div
-            className={`relative w-full overflow-hidden rounded-[1.4rem] ${options.transparentBg && options.customMedia?.tagName !== 'VIDEO' ? 'bg-[linear-gradient(45deg,#1b1b1b_25%,#252525_25%,#252525_50%,#1b1b1b_50%,#1b1b1b_75%,#252525_75%)] bg-[length:20px_20px]' : 'bg-black'}`}
+            className="relative w-full overflow-hidden rounded-[1.4rem] bg-black"
             style={{ aspectRatio }}
           >
             <canvas ref={canvasRef} className="h-full w-full" />
-            {options.transparentBg && (
-              <div className="pointer-events-none absolute left-2 top-2 rounded-md border border-[#00FF62]/60 bg-black/80 px-2 py-1 text-[9px] font-bold tracking-wider text-[#00FF62] shadow-[0_0_12px_rgba(0,255,98,0.45)]">
-                {options.customMedia?.tagName === 'VIDEO' ? 'POPUP ON SOURCE VIDEO' : 'MOBILE OVERLAY · CHROMA KEY'}
-              </div>
-            )}
             {options.showSafeZones && (
               <>
                 <div className="pointer-events-none absolute inset-x-0 top-[12%] border-t border-dashed border-yellow-300/80" />

@@ -8,17 +8,35 @@ import BrandKit from './BrandKit';
 
 const FONTS = ['Bold', 'Extra Bold', 'Anton'];
 const ANIMATIONS = [
+  'Classic Bounce',
+  'Karaoke Fill',
+  'Typewriter',
+  'Glitch / Datamosh',
+  'Neon Glow',
+  'Sticker Pop',
+  'Bold Impact / Word Slam',
+  'Handwritten Reveal',
+  'Gradient Sweep',
+  'Outline Chase',
+  'Blur In / Focus Pull',
+  '3D Extrude',
+  'Liquid / Wobble',
+  'Split Reveal',
+  'Mask Wipe',
+  'Stacked Bar',
+  'Shake / Earthquake',
+  'Flip / Rotate In',
+  'Echo / Trail',
+  'Fire / Smoke / Particle',
   'Pop',
   'Bounce',
-  'Typewriter',
   'Glow Pop',
   'Slide Up',
-  'Shake',
   'Neon Flicker',
   'Glitch',
   'Karaoke',
   'Shimmer',
-  'Sticker Pop',
+  'Sticker Pop Legacy',
   'Wave',
   'Green Box',
   'Yellow Stroke',
@@ -186,6 +204,16 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
             <option key={a} value={a} className="bg-[#121212]">{a}</option>
           ))}
         </select>
+        <div className="mt-2 grid grid-cols-2 gap-2">
+          <label className="rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-[11px] text-white/55">
+            Horizontal position
+            <input type="range" min="-40" max="40" value={options.textOffsetX || 0} onChange={(e) => update({ textOffsetX: Number(e.target.value) })} className="pop-range mt-1 w-full" />
+          </label>
+          <label className="rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-[11px] text-white/55">
+            Vertical position
+            <input type="range" min="-40" max="40" value={options.textOffsetY || 0} onChange={(e) => update({ textOffsetY: Number(e.target.value) })} className="pop-range mt-1 w-full" />
+          </label>
+        </div>
         {options.animation === 'Motion Typography' && (options.selectedStyles || []).length <= 1 && (
           <div className="mt-2 space-y-2">
             <label className="flex items-center justify-between rounded-xl border border-white/15 bg-black/40 px-3 py-2.5 text-xs text-white/75">
@@ -413,25 +441,6 @@ export default function ControlPanel({ options, setOptions, onGenerate, exportin
         <div className="space-y-2.5">
           <ToggleRow label="Top progress bar" on={options.showProgressbar} onClick={() => update({ showProgressbar: !options.showProgressbar })} />
           <ToggleRow label="Show social safe zones" on={options.showSafeZones} onClick={() => update({ showSafeZones: !options.showSafeZones })} />
-          <ToggleRow
-            label={options.customMedia?.tagName === 'VIDEO' ? 'Add popup to source video' : 'Mobile overlay (Chroma Key MP4)'}
-            on={options.transparentBg}
-            onClick={() => {
-              const enabled = !options.transparentBg;
-              update({ transparentBg: enabled, exportMode: enabled ? 'transparent' : 'normal' });
-            }}
-          />
-          {options.transparentBg && (
-            <div className="rounded-xl border border-green-400/30 bg-green-400/[0.08] p-3 text-[11px] leading-relaxed text-white/70">
-              <div className="mb-1 font-bold text-[#00FF62]">{options.customMedia?.tagName === 'VIDEO' ? 'POPUP BAKED INTO VIDEO' : 'MOBILE OVERLAY ON'}</div>
-              {options.customMedia?.tagName === 'VIDEO'
-                ? 'Your popup words will be rendered directly over the selected video and downloaded as one phone-ready MP4.'
-                : 'Download is a standard H.264 MP4 with your animated popup words over a bright green key background. In CapCut or InShot, add the MP4 as an overlay, open Chroma Key, select the green, and remove it.'}
-              {options.customMedia?.tagName !== 'VIDEO' && (
-                <span className="mt-2 block font-semibold text-amber-300">A genuinely transparent video file is not reliably supported by CapCut/InShot mobile. This MP4 workflow is the compatible option.</span>
-              )}
-            </div>
-          )}
           <ToggleRow label="Auto-highlight key words" on={options.autoHighlight} onClick={() => update({ autoHighlight: !options.autoHighlight })} />
           {options.autoHighlight && (
             <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-black/40 px-3 py-2">

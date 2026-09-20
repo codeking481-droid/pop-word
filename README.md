@@ -35,17 +35,16 @@ the master timeline; seeking, preview playback, and the exported MP4 stay
 synchronized with the source video. Videos longer than two minutes are
 rejected so exports remain practical on phones.
 
-When a source video is selected, enabling the overlay toggle exports the
-caption animation composited directly into that video as one H.264 MP4. If no
-source video is selected, the same toggle creates the mobile Chroma Key MP4
-overlay described below.
+When a source video is selected, export renders the caption animation directly
+into that video as one H.264 MP4 ready for a phone. If no source video is
+selected, export creates the normal standalone popup video.
 
-For a mobile caption overlay, enable **Mobile overlay (Chroma Key MP4)**.
-The editor exports a standard H.264 MP4 with the animated words over a bright
-green background. Add that MP4 as an overlay in CapCut or InShot, choose
-**Chroma Key**, select the green, and remove it. This is the reliable mobile
-workflow; those apps do not guarantee support for transparent VP9 WebM files.
-When the toggle is off, the editor exports the normal selected background.
+Choose from 20 dedicated caption treatments, including Classic Bounce,
+Karaoke Fill, Typewriter, Glitch, Neon, Sticker, Word Slam, Handwritten,
+Gradient Sweep, Outline Chase, Blur In, 3D Extrude, Liquid Wobble, Split
+Reveal, Mask Wipe, Stacked Bar, Shake, Flip, Echo Trail, and Fire/Particle.
+Use the horizontal and vertical position controls to place the popup where it
+belongs in the source video before exporting.
 
 To sync captions to an existing voiceover, enter its exact length in
 **Voiceover length (seconds)**. Durations from 2 seconds to 60 minutes are

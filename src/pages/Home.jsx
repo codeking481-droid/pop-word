@@ -58,13 +58,13 @@ export default function Home() {
     mediaLibrary: [],
     showProgressbar: true,
     showSafeZones: false,
-    transparentBg: false,
-    exportMode: 'normal',
     autoHighlight: false,
     highlightColor: '#FFD700',
     emojiPop: false,
     autoZoom: false,
     popScale: 1.2,
+    textOffsetX: 0,
+    textOffsetY: 0,
     shadowIntensity: 1,
     bgColor: '#00C853',
     radius: 16,
@@ -207,10 +207,6 @@ export default function Home() {
       toast.error('Free exports are limited to 5 seconds. Upgrade for longer clips.');
       return null;
     }
-    if (!isPro && options.transparentBg) {
-      toast.error('Transparent background exports are available with Pro.');
-      return null;
-    }
     return { r, dur };
   };
 
@@ -348,23 +344,21 @@ export default function Home() {
     if (!ctx) return;
     if (!canTrialExport()) return;
     const transparentExport = false;
-    const greenScreenExport = options.transparentBg && options.customMedia?.tagName !== 'VIDEO';
-    setExporting({ type: greenScreenExport ? 'MP4' : 'VIDEO', progress: 0 });
+    const greenScreenExport = false;
+    setExporting({ type: 'VIDEO', progress: 0 });
     try {
       const blob = await recordVideo(ctx.r, {
         duration: ctx.dur,
         transparentBg: transparentExport,
         greenScreen: greenScreenExport,
-        onProgress: (p) => setExporting({ type: greenScreenExport ? 'MP4' : 'VIDEO', progress: p }),
+        onProgress: (p) => setExporting({ type: 'VIDEO', progress: p }),
       });
       if (greenScreenExport && !blob.type.toLowerCase().includes('video/mp4')) {
         throw new Error('Green Screen export did not produce an H.264 MP4. No file was downloaded.');
       }
       downloadBlob(blob, greenScreenExport ? 'popword-mobile-overlay.mp4' : 'popup-video.' + (blob.type.includes('mp4') ? 'mp4' : 'webm'));
       await recordTrialExport();
-      toast.success(greenScreenExport
-        ? 'Mobile overlay MP4 ready. Add it, then use Chroma Key to remove the green.'
-        : 'Video ready!');
+      toast.success('Video ready!');
     } catch (e) {
       toast.error(e?.message || 'Recording failed');
     } finally {
@@ -380,7 +374,7 @@ export default function Home() {
     const renderer = rendererRef.current;
     if (!renderer) { toast.error('Preview is still loading'); return; }
     const transparentExport = false;
-    const greenScreenExport = options.transparentBg && options.customMedia?.tagName !== 'VIDEO';
+    const greenScreenExport = false;
     setBatchProgress({ current: 0, total: scripts.length });
     setExporting({ type: 'BATCH', progress: 0 });
     try {
@@ -423,7 +417,7 @@ export default function Home() {
     const ctx = ensureScript();
     if (!ctx) return;
     const transparentExport = false;
-    const greenScreenExport = options.transparentBg && options.customMedia?.tagName !== 'VIDEO';
+    const greenScreenExport = false;
     setMultiExporting(true);
     const aspects = ['9:16', '1:1', '4:5', '16:9'];
     const original = options.aspect;
