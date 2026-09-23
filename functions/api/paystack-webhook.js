@@ -1,6 +1,6 @@
 const PAYSTACK_API = 'https://api.paystack.co';
 const DEFAULT_SUPABASE_URL = 'https://iqlwubovcnugilmdudir.supabase.co';
-const EXPECTED_AMOUNT = 300000;
+const EXPECTED_AMOUNT = 750000;
 const EXPECTED_CURRENCY = 'NGN';
 
 function response(body, status = 200) {

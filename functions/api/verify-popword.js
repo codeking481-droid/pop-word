@@ -69,7 +69,7 @@ export async function onRequestGet({ request, env }) {
   const payment = verification?.data;
   if (!verifyResponse.ok || !verification?.status || payment?.status !== 'success') return json({ error: 'Paystack verification failed' }, 400);
   if (payment.customer?.email?.trim().toLowerCase() !== authenticatedEmail) return json({ error: 'Payment email does not match account email' }, 403);
-  if (payment.plan !== env.PAYSTACK_PLAN_CODE || payment.amount !== 300000 || payment.currency !== 'NGN') {
+  if (payment.plan !== env.PAYSTACK_PLAN_CODE || payment.amount !== 750000 || payment.currency !== 'NGN') {
     return json({ error: 'Payment is not for the configured PopWord plan' }, 400);
   }
 
